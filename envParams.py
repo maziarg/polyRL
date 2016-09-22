@@ -12,8 +12,8 @@ class envParams(object):
 
     def __init__(self):
         self.stateSpaceDim=2
-        self.stateSpaceRage=[[0,100],[0,100]]
-        self.angelRange=[0,360]
+        self.stateSpaceRange=[[0,100],[0,100]]
+        self.angleRange=[0,360]
         self.initStateDist="uniform"  
         self.initThetaDist = "uniform"   
         self.gridXscale=100
