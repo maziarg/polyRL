@@ -8,8 +8,8 @@ from builtins import range
 
 if __name__ == '__main__':
     numberOfMoves=1000
-    stepSize=2
-    persistanceLenghth=1000
+    stepSize=5
+    persistanceLenghth=256
     polyexp= polyExplorer(numberOfMoves, stepSize, persistanceLenghth)
     
     initPosition=polyexp.drawInitState()
