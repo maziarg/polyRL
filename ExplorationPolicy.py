@@ -33,6 +33,9 @@ class polyExplorer(object):
         self.theta= self.computeTheta()
         self.setBaseTheta(self.theta_0)
         self.cornerIndex=0
+        self.wallVisitFlag=0
+        self.currentPosition=[-1,-1]
+        self.nextPosition=[-1,-1]
         
             
     def setBaseTheta(self,theta_base):
@@ -114,7 +117,9 @@ class polyExplorer(object):
     
     def OnWallDeflect(self,currentPosition, nextPosition,current_x_index, current_y_index):
         #On x Wall
+        # Current x and y indecies are used to check if the agent's current position is on the wall 
         if current_x_index==1 and current_y_index==0:
+            
             if currentPosition[1] > nextPosition[1]:
                 if currentPosition[1]-(self.stepSize) < self.envparams.stateSpaceRage[1][0]:
                     nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][0]]
@@ -162,91 +167,123 @@ class polyExplorer(object):
             y_index=1
         
         #On x Wall
-        if x_index==1 and y_index==0:
-            if currentPosition[1] > nextPosition[1]:
-                currentPosition = nextPosition
-                if currentPosition[1]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[1][0]:
-                    nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][0]]
-                else: 
-                    nextPosition= [currentPosition[0], currentPosition[1]-(self.stepSize-distanceTravelled)]
-            elif currentPosition[1] < nextPosition[1]:
-                currentPosition = nextPosition
-                if currentPosition[1]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[1][1]:
-                    nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][1]]
-                else: 
-                    nextPosition= [currentPosition[0], currentPosition[1]+(self.stepSize-distanceTravelled)]
-            else :
-                if random.randint(0,1)==0:
+        if self.wallVisitFlag==0:
+            if x_index==1 and y_index==0:
+                if currentPosition[1] > nextPosition[1]:
                     currentPosition = nextPosition
                     if currentPosition[1]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[1][0]:
                         nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][0]]
-                    else:
+                    else: 
                         nextPosition= [currentPosition[0], currentPosition[1]-(self.stepSize-distanceTravelled)]
-                else: 
+                elif currentPosition[1] < nextPosition[1]:
                     currentPosition = nextPosition
                     if currentPosition[1]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[1][1]:
                         nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][1]]
-                    else:
+                    else: 
                         nextPosition= [currentPosition[0], currentPosition[1]+(self.stepSize-distanceTravelled)]
-        #On y Wall
-        elif x_index==0 and y_index==1:
-            
-            if currentPosition[0] > nextPosition[0]:
-                currentPosition = nextPosition
-                if currentPosition[0]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[0][0]:
-                    nextPosition= [self.envparams.stateSpaceRage[0][0], currentPosition[1]]
-                else:
-                    nextPosition= [currentPosition[0]-(self.stepSize-distanceTravelled), currentPosition[1]]
-            elif currentPosition[1] < nextPosition[1]:
-                currentPosition = nextPosition
-                if currentPosition[0]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[0][1]:
-                    nextPosition= [self.envparams.stateSpaceRage[0][1], currentPosition[1]]
-                else:
-                    nextPosition= [currentPosition[0]+(self.stepSize-distanceTravelled), currentPosition[1]]
-            else :
-                if random.randint(0,1)==0:
+                else :
+                    if random.randint(0,1)==0:
+                        currentPosition = nextPosition
+                        if currentPosition[1]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[1][0]:
+                            nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][0]]
+                        else:
+                            nextPosition= [currentPosition[0], currentPosition[1]-(self.stepSize-distanceTravelled)]
+                    else: 
+                        currentPosition = nextPosition
+                        if currentPosition[1]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[1][1]:
+                            nextPosition= [currentPosition[0], self.envparams.stateSpaceRage[1][1]]
+                        else:
+                            nextPosition= [currentPosition[0], currentPosition[1]+(self.stepSize-distanceTravelled)]
+            #On y Wall
+            elif x_index==0 and y_index==1:
+                
+                if currentPosition[0] > nextPosition[0]:
                     currentPosition = nextPosition
                     if currentPosition[0]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[0][0]:
                         nextPosition= [self.envparams.stateSpaceRage[0][0], currentPosition[1]]
-                    else:  
+                    else:
                         nextPosition= [currentPosition[0]-(self.stepSize-distanceTravelled), currentPosition[1]]
-                else: 
+                elif currentPosition[1] < nextPosition[1]:
                     currentPosition = nextPosition
                     if currentPosition[0]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[0][1]:
                         nextPosition= [self.envparams.stateSpaceRage[0][1], currentPosition[1]]
                     else:
-                        nextPosition= [currentPosition[0]+(self.stepSize-distanceTravelled), currentPosition[1]]            
-        #Stuck at a corner
-        elif x_index==1 and y_index==1:
-            if (abs(nextPosition[0]-currentPosition[0]) < abs(nextPosition[1]-currentPosition[1])):
-                currentPosition= nextPosition
-                if currentPosition[0]==self.envparams.stateSpaceRage[0][0]:
-                    nextPosition=[currentPosition[0]+self.stepSize-distanceTravelled, currentPosition[1]]
-                if currentPosition[0]==self.envparams.stateSpaceRage[0][1]:
-                    nextPosition=[currentPosition[0]-self.stepSize-distanceTravelled, currentPosition[1]]
-            if (abs(nextPosition[0]-currentPosition[0]) > abs(nextPosition[1]-currentPosition[1])):
-                currentPosition= nextPosition
-                if currentPosition[1]==self.envparams.stateSpaceRage[1][0]:
-                    nextPosition=[currentPosition[0], currentPosition[1]+self.stepSize-distanceTravelled]
-                if currentPosition[1]==self.envparams.stateSpaceRage[1][1]:
-                    nextPosition=[currentPosition[0], currentPosition[1]-self.stepSize-distanceTravelled]
-            
-            if (abs(nextPosition[0]-currentPosition[0]) == abs(nextPosition[1]-currentPosition[1])):
-                if random.randint(0,1)==0:
+                        nextPosition= [currentPosition[0]+(self.stepSize-distanceTravelled), currentPosition[1]]
+                else :
+                    if random.randint(0,1)==0:
+                        currentPosition = nextPosition
+                        if currentPosition[0]-(self.stepSize-distanceTravelled) < self.envparams.stateSpaceRage[0][0]:
+                            nextPosition= [self.envparams.stateSpaceRage[0][0], currentPosition[1]]
+                        else:  
+                            nextPosition= [currentPosition[0]-(self.stepSize-distanceTravelled), currentPosition[1]]
+                    else: 
+                        currentPosition = nextPosition
+                        if currentPosition[0]+(self.stepSize-distanceTravelled) > self.envparams.stateSpaceRage[0][1]:
+                            nextPosition= [self.envparams.stateSpaceRage[0][1], currentPosition[1]]
+                        else:
+                            nextPosition= [currentPosition[0]+(self.stepSize-distanceTravelled), currentPosition[1]]            
+            #Stuck at a corner
+            elif x_index==1 and y_index==1:
+                if (abs(nextPosition[0]-currentPosition[0]) < abs(nextPosition[1]-currentPosition[1])):
                     currentPosition= nextPosition
                     if currentPosition[0]==self.envparams.stateSpaceRage[0][0]:
                         nextPosition=[currentPosition[0]+self.stepSize-distanceTravelled, currentPosition[1]]
                     if currentPosition[0]==self.envparams.stateSpaceRage[0][1]:
                         nextPosition=[currentPosition[0]-self.stepSize-distanceTravelled, currentPosition[1]]
-                else: 
+                if (abs(nextPosition[0]-currentPosition[0]) > abs(nextPosition[1]-currentPosition[1])):
                     currentPosition= nextPosition
                     if currentPosition[1]==self.envparams.stateSpaceRage[1][0]:
                         nextPosition=[currentPosition[0], currentPosition[1]+self.stepSize-distanceTravelled]
                     if currentPosition[1]==self.envparams.stateSpaceRage[1][1]:
                         nextPosition=[currentPosition[0], currentPosition[1]-self.stepSize-distanceTravelled]
+                
+                if (abs(nextPosition[0]-currentPosition[0]) == abs(nextPosition[1]-currentPosition[1])):
+                    if random.randint(0,1)==0:
+                        currentPosition= nextPosition
+                        if currentPosition[0]==self.envparams.stateSpaceRage[0][0]:
+                            nextPosition=[currentPosition[0]+self.stepSize-distanceTravelled, currentPosition[1]]
+                        if currentPosition[0]==self.envparams.stateSpaceRage[0][1]:
+                            nextPosition=[currentPosition[0]-self.stepSize-distanceTravelled, currentPosition[1]]
+                    else: 
+                        currentPosition= nextPosition
+                        if currentPosition[1]==self.envparams.stateSpaceRage[1][0]:
+                            nextPosition=[currentPosition[0], currentPosition[1]+self.stepSize-distanceTravelled]
+                        if currentPosition[1]==self.envparams.stateSpaceRage[1][1]:
+                            nextPosition=[currentPosition[0], currentPosition[1]-self.stepSize-distanceTravelled]
+        else:
+            nextPosition = self.deflectIn(currentPosition)
+            self.wallVisitFlag=0
         return nextPosition, currentPosition
     
+    def deflectIn(self,position):
         
+        if self.envparams.stateSpaceRage[0][0]==position[0] and self.yIsInRange(position[1]):
+            self.setBaseTheta(((self.theta_base)-self.theta+360)%360)
+            
+        if self.envparams.stateSpaceRage[0][1]==position[0] and self.yIsInRange(position[1]):
+            self.setBaseTheta(((self.theta_base)+self.theta)%360)
+            
+        if self.envparams.stateSpaceRage[1][0]==position[1] and self.xIsInRange(position[0]):
+            self.setBaseTheta(((self.theta_base)+self.theta)%360)
+            
+        if self.envparams.stateSpaceRage[1][1]==position[1] and self.xIsInRange(position[0]):
+            self.setBaseTheta(((self.theta_base)-self.theta+360)%360)
+        directionalAngle=self.theta_base
+        x= position[0]+self.stepSize*math.cos(directionalAngle)
+        y= position[1]+self.stepSize*math.sin(directionalAngle)
+        
+        return [x,y]
+    
+    def isOnWall(self, position):
+        if self.envparams.stateSpaceRage[0][0]==position[0] and self.yIsInRange(position[1]):
+            return True
+        if self.envparams.stateSpaceRage[0][1]==position[0] and self.yIsInRange(position[1]):
+            return True
+        if self.envparams.stateSpaceRage[1][0]==position[1] and self.xIsInRange(position[0]):
+            return True
+        if self.envparams.stateSpaceRage[1][1]==position[1] and self.xIsInRange(position[0]):
+            return True
+    
     def move(self,currentPosition):
         #print("theta = "+str(self.theta))
         #print("theta_0 = "+str(self.theta_0))
@@ -319,12 +356,18 @@ class polyExplorer(object):
         if self.envparams.stateSpaceRage[1][1]==currentPosition[1]:
             current_y_index=1
         if current_x_index==0 and current_y_index==0:
+            #this means non is on the wall
             nextPosition=self.findWallIntersection(xflag, yflag, currentPosition, [x,y])
             traveledDistanc= round(((nextPosition[1]-currentPosition[1])**2+(nextPosition[0]-currentPosition[0])**2)**(0.5),2)
             traveledDistanc = traveledDistanc.real
             totalTravDist= traveledDistanc
             while(totalTravDist < self.stepSize):
-                nextPosition,currentPosition=self.deflect(currentPosition, nextPosition, xflag, yflag, totalTravDist)
+                if self.isOnWall(currentPosition) and self.isOnWall(nextPosition):
+                    self.wallVisitFlag=1
+                    nextPosition, currentPosition=self.deflect(currentPosition, nextPosition, xflag, yflag, totalTravDist)
+                else:
+                    nextPosition,currentPosition=self.deflect(currentPosition, nextPosition, xflag, yflag, totalTravDist)
+                
                 if (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])>0:
                     self.setBaseTheta(90)
                 elif (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])<0:
@@ -340,29 +383,38 @@ class polyExplorer(object):
                 traveledDistanc = traveledDistanc.real
                 totalTravDist+=traveledDistanc  
         else: 
+            #this means that one of the coordinates is on the wall
             nextPosition=[x,y]
-            x_index=0
-            y_index=0
-            if self.envparams.stateSpaceRage[0][0]>nextPosition[0]:
-                x_index=1
-            if self.envparams.stateSpaceRage[0][1]<nextPosition[0]:
-                x_index=1
-            if self.envparams.stateSpaceRage[1][0]>nextPosition[1]:
-                y_index=1
-            if self.envparams.stateSpaceRage[1][1]<nextPosition[1]:
-                y_index=1 
-            if x_index==1 or y_index==1:
-                nextPosition,currentPosition=self.OnWallDeflect(currentPosition, nextPosition,current_x_index, current_y_index)
-                if (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])>0:
-                    self.setBaseTheta(90)
-                elif (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])<0:
-                    self.setBaseTheta(270)
-                elif ((nextPosition[0]-currentPosition[0])<0 and (nextPosition[1]-currentPosition[1])>0) or((nextPosition[0]-currentPosition[0])<0 and (nextPosition[1]-currentPosition[1])<0):
-                    self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0])))+180)
-                elif (nextPosition[0]-currentPosition[0])>0 and (nextPosition[1]-currentPosition[1])<0:
-                    self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0])))+360)
-                else:
-                    self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0]))))
-            
+            if self.isOnWall(self.currentPosition) and  self.isOnWall(self.nextPosition):    
+                nextPosition=self.deflectIn(currentPosition)                        
+            else:    
+                x_index=0
+                y_index=0
+                if self.envparams.stateSpaceRage[0][0]>nextPosition[0]:
+                    x_index=1
+                if self.envparams.stateSpaceRage[0][1]<nextPosition[0]:
+                    x_index=1
+                if self.envparams.stateSpaceRage[1][0]>nextPosition[1]:
+                    y_index=1
+                if self.envparams.stateSpaceRage[1][1]<nextPosition[1]:
+                    y_index=1 
+                if x_index==1 or y_index==1:
+                    #this means currently on the wall and one of the nextPosition coordinates is out of range
+                    nextPosition,currentPosition=self.OnWallDeflect(currentPosition, nextPosition,current_x_index, current_y_index)
+                    #####This part needs to be fixed######
+                    ######################################
+                    if (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])>0:
+                        self.setBaseTheta(90)
+                    elif (nextPosition[0]-currentPosition[0])==0 and (nextPosition[1]-currentPosition[1])<0:
+                        self.setBaseTheta(270)
+                    elif ((nextPosition[0]-currentPosition[0])<0 and (nextPosition[1]-currentPosition[1])>0) or((nextPosition[0]-currentPosition[0])<0 and (nextPosition[1]-currentPosition[1])<0):
+                        self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0])))+180)
+                    elif (nextPosition[0]-currentPosition[0])>0 and (nextPosition[1]-currentPosition[1])<0:
+                        self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0])))+360)
+                    else:
+                        self.setBaseTheta(math.degrees(math.atan((nextPosition[1]-currentPosition[1])/(nextPosition[0]-currentPosition[0]))))
+                
+        self.currentPosition=currentPosition
+        self.nextPosition=nextPosition
             
         return nextPosition
