@@ -8,7 +8,6 @@ import numpy as np
 from numpy import zeros
 import math
 import random
-from _overlapped import NULL
 from cmath import sqrt
 class polyExplorer(object):
     '''
