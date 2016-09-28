@@ -1,13 +1,12 @@
 '''
 Created on Sep 7, 2016
-
 @author: mgomrokchi
 '''
 from envParams import envParams
 import numpy as np
-from numpy import zeros
 import math
 import random
+from _overlapped import NULL
 from cmath import sqrt
 class polyExplorer(object):
     '''
@@ -37,6 +36,8 @@ class polyExplorer(object):
         self.currentPosition = [-1, -1]
         self.nextPosition = [-1, -1]
         self.numberOfMoves = self.numberOfsteps
+        self.STD=0
+        
             
     def setBaseTheta(self, theta_base):
         self.theta_base = theta_base
@@ -68,10 +69,19 @@ class polyExplorer(object):
         
     def computeDirectionalAngle(self):
         HT = random.randint(0, 1)
-        if HT == 0:
-            self.setBaseTheta(((self.theta_base) - self.theta + 360) % 360)
+        if self.STD==0:
+            tempAngle=self.theta
         else:
-            self.setBaseTheta(((self.theta_base) + self.theta) % 360)
+            tempAngle=np.random.normal(self.theta,self.STD)
+        #if self.theta_base-tempAngle >=0:
+        #   self.setBaseTheta((self.theta_base+ tempAngle  )%360)
+        #else:
+        #   self.setBaseTheta((self.theta_base+ tempAngle+360)%360)
+        if HT == 0:
+            self.setBaseTheta(((self.theta_base) - tempAngle + 360) % 360)
+        else:
+            self.setBaseTheta(((self.theta_base) + tempAngle) % 360)
+        
         return self.theta_base
                 
     def findWallIntersection(self, xflag, yflag, currentPosition, nextPosition):
@@ -334,6 +344,7 @@ class polyExplorer(object):
                 x = currentPosition[0]
                 y = currentPosition[1] + self.stepSize
         else:
+            #self.theta_base == 180:
             if  currentPosition[1] == self.envparams.stateSpaceRange[1][1]:  
                 x = currentPosition[0]
                 y = currentPosition[1] - self.stepSize
@@ -341,21 +352,6 @@ class polyExplorer(object):
                 x = currentPosition[0]
                 y = currentPosition[1] + self.stepSize
         return [x,y]
-    def countNumStatesVisited(self,positionArray):
-        envMatrix=zeros((self.envparams.gridYscale,self.envparams.gridXscale))
-        (xIndex,Yindex)=positionArray.shape
-        numOfStatesVisited=0
-        for i in range(xIndex):
-            xStateNumber=self.envparams.gridYscale-1-math.floor((positionArray[i][1]-self.envparams.stateSpaceRange[1][0])*self.envparams.gridXscale**2/((self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0])**2))
-            yStateNumber=math.floor((positionArray[i][0]-self.envparams.stateSpaceRange[0][0])*self.envparams.gridYscale**2/((self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0])**2))
-            if xStateNumber==self.envparams.gridYscale:
-                xStateNumber=self.envparams.gridYscale-1
-            if yStateNumber==self.envparams.gridXscale:
-                yStateNumber=self.envparams.gridYscale-1
-            if envMatrix[xStateNumber][yStateNumber]==0:
-                envMatrix[xStateNumber][yStateNumber]=1
-                numOfStatesVisited+=1
-        return numOfStatesVisited
     def move(self, currentPosition):
         
         # If the current position is a corner
@@ -469,6 +465,6 @@ class polyExplorer(object):
         self.currentPosition = currentPosition
         self.nextPosition = nextPosition
         self.numberOfMoves -= 1
-        
             
         return nextPosition
+
