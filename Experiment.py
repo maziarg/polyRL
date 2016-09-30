@@ -6,23 +6,23 @@ Created on Sep 15, 2016
 from ExplorationPolicy import polyExplorer 
 from graphics import *
 from builtins import range
-from numpy import zeros
+from numpy import *
 
 if __name__ == '__main__':
     
     
-    numberOfMoves=3000
+    numberOfMoves=20000
     stepSize=1
-    persistenceLength=70
+    persistenceLength=200
     polyexp= polyExplorer(numberOfMoves, stepSize, persistenceLength)
     #myTurtle= turtle()
-    anchorpoint= Point(polyexp.envparams.stateSpaceRange[0][1]/2,polyexp.envparams.stateSpaceRange[1][1]/2)
-    image= Image(anchorpoint, polyexp.envparams.stateSpaceRange[0][1], polyexp.envparams.stateSpaceRange[1][1])
+    #anchorpoint= Point(polyexp.envparams.stateSpaceRange[0][1]/2,polyexp.envparams.stateSpaceRange[1][1]/2)
+    #image= Image(anchorpoint, polyexp.envparams.stateSpaceRange[0][1], polyexp.envparams.stateSpaceRange[1][1])
     
     initPosition=polyexp.drawInitState()
     tempState=initPosition
     angle=polyexp.theta_0
-    positionArray=zeros((numberOfMoves,2))
+    #positionArray=zeros((numberOfMoves,2))
     win = GraphWin("GRID",  1000,1000)
     line1 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]))
     line1.draw(win)
@@ -44,7 +44,6 @@ if __name__ == '__main__':
         xCoordinate=tempState
         #print("angle #"+str(i)+ " = "+str(angle))
         print("move #"+str(i)+ " = "+str(tempState))
-        positionArray[i,:]=tempState
         angle=polyexp.theta_base
         #print("theta_base = "+str(i)+ " = "+str(angle))
         tempState=polyexp.move(tempState)
@@ -57,11 +56,5 @@ if __name__ == '__main__':
     # saves the current TKinter object in postscript format
     win.postscript(file="image.eps", colormode='color')
     print("theta:",str(polyexp.theta))
-   
-    positionArray[numberOfMoves-1,:]=tempState
-    numOfStatesVisited=polyexp.countNumStatesVisited(positionArray)
-    numStates=polyexp.envparams.gridXscale*polyexp.envparams.gridYscale
-    fractionVisited=numOfStatesVisited/numStates
-    print("Total number of states:"+str(numStates))
-    print("Number of visited states:"+str(numOfStatesVisited))
-    print("Fraction of states visited:"+str(fractionVisited))
+    print("Number of segments in each square:",str(polyexp.numberOfSegment))
+    

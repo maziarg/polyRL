@@ -8,6 +8,7 @@ import math
 import random
 from _overlapped import NULL
 from cmath import sqrt
+from numpy import zeros
 class polyExplorer(object):
     '''
     2D exploration policy based on persistence length idea
@@ -29,6 +30,7 @@ class polyExplorer(object):
         self.postion_0 = self.drawInitState()
         self.theta_0 = self.computeTheta_0()
         self.theta_base = 0
+        self.randomWalkFlag=0
         self.theta = self.computeTheta()
         self.setBaseTheta(self.theta_0)
         self.cornerIndex = 0
@@ -36,9 +38,12 @@ class polyExplorer(object):
         self.currentPosition = [-1, -1]
         self.nextPosition = [-1, -1]
         self.numberOfMoves = self.numberOfsteps
-        self.STD=0
+        self.STD=5
+        self.numberOfDivision=8 #must be even  
+        self.numberOfSegment=zeros((1,self.numberOfDivision/2))     
+        [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
         
-            
+          
     def setBaseTheta(self, theta_base):
         self.theta_base = theta_base
 
@@ -61,28 +66,34 @@ class polyExplorer(object):
             return True
     
     def computeTheta(self):
-        exp = (float)(-1 / self.persistenceLength)
-        return math.degrees(math.acos(math.pow(math.e, exp) / (self.stepSize ** 2)))
+        if self.randomWalkFlag==0:
+            exp = (float)(-1 / self.persistenceLength)
+            return math.degrees(math.acos(math.pow(math.e, exp) / (self.stepSize ** 2)))
+        else:
+            return random.uniform(self.envparams.angleRange[0], self.envparams.angleRange[1])
              
     def computeTheta_0(self):
         return random.uniform(self.envparams.angleRange[0], self.envparams.angleRange[1])
         
     def computeDirectionalAngle(self):
         HT = random.randint(0, 1)
-        if self.STD==0:
-            tempAngle=self.theta
+        if self.randomWalkFlag==0:
+            if self.STD==0:
+                tempAngle=self.theta
+            else:
+                tempAngle=np.random.normal(self.theta,self.STD)
+            #if self.theta_base-tempAngle >=0:
+            #   self.setBaseTheta((self.theta_base+ tempAngle  )%360)
+            #else:
+            #   self.setBaseTheta((self.theta_base+ tempAngle+360)%360)
+            if HT == 0:
+                self.setBaseTheta(((self.theta_base) - tempAngle + 360) % 360)
+            else:
+                self.setBaseTheta(((self.theta_base) + tempAngle) % 360)
+            
+            return self.theta_base
         else:
-            tempAngle=np.random.normal(self.theta,self.STD)
-        #if self.theta_base-tempAngle >=0:
-        #   self.setBaseTheta((self.theta_base+ tempAngle  )%360)
-        #else:
-        #   self.setBaseTheta((self.theta_base+ tempAngle+360)%360)
-        if HT == 0:
-            self.setBaseTheta(((self.theta_base) - tempAngle + 360) % 360)
-        else:
-            self.setBaseTheta(((self.theta_base) + tempAngle) % 360)
-        
-        return self.theta_base
+            return random.uniform(self.envparams.angleRange[0], self.envparams.angleRange[1])
                 
     def findWallIntersection(self, xflag, yflag, currentPosition, nextPosition):
         if (nextPosition[0] - currentPosition[0]) == 0 and (nextPosition[1] - currentPosition[1]) > 0:
@@ -352,6 +363,125 @@ class polyExplorer(object):
                 x = currentPosition[0]
                 y = currentPosition[1] + self.stepSize
         return [x,y]
+    def setDivisionSize(self):
+        xSize=(self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0])/self.numberOfDivision
+        ySize=(self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0])/self.numberOfDivision
+        return [xSize, ySize]
+    def borderDeterm(self, n):
+        xLower=((self.numberOfDivision/2)-n)*self.xDivisionSize+self.envparams.stateSpaceRange[0][0]
+        xUpper=((self.numberOfDivision/2)+n)*self.xDivisionSize+self.envparams.stateSpaceRange[0][0]
+        yLower=((self.numberOfDivision/2)-n)*self.yDivisionSize+self.envparams.stateSpaceRange[1][0]
+        yUpper=((self.numberOfDivision/2)+n)*self.yDivisionSize+self.envparams.stateSpaceRange[1][0]
+        return [xLower, xUpper, yLower, yUpper]
+    def segmentNum(self, currentPosition, nextPosition):
+        x1 = currentPosition[0]
+        y1 = currentPosition[1]
+        x2 = nextPosition[0]
+        y2 = nextPosition[1]
+        searchFlag=0
+        count=self.numberOfDivision/2+1
+        for i in range(1,int(count)):
+            plusFlag=0
+            minusFlag=0
+            if searchFlag==0:
+                if x1>=self.borderDeterm(i)[0] and x1<=self.borderDeterm(i)[1] and y1>=self.borderDeterm(i)[2] and y1<=self.borderDeterm(i)[3]:
+                    searchFlag=1
+                    if x2>=self.borderDeterm(i)[0] and x2<=self.borderDeterm(i)[1] and y2>=self.borderDeterm(i)[2] and y2<=self.borderDeterm(i)[3]:
+                        if i==1:
+                            self.numberOfSegment[0][i-1]=self.numberOfSegment[0][i-1]+1
+                        elif (x2<=self.borderDeterm(i-1)[0] or x2>=self.borderDeterm(i-1)[1]) or (y2<=self.borderDeterm(i-1)[2] or y2>=self.borderDeterm(i-1)[3]):
+                            self.numberOfSegment[0][i-1]=self.numberOfSegment[0][i-1]+1
+                        else:
+                            minusFlag=1
+                            if x1==x2:
+                                if y2<self.borderDeterm(i-1)[3]:
+                                    [xInt, yInt]=[x1,self.borderDeterm(i-1)[3]]
+                                elif y2>self.borderDeterm(i-1)[2]:
+                                    [xInt, yInt]=[x1,self.borderDeterm(i-1)[2]]
+                            elif y1==y2:
+                                if x2<self.borderDeterm(i-1)[1]:
+                                    [xInt, yInt]=[self.borderDeterm(i-1)[1], y1]
+                                elif x2>self.borderDeterm(i-1)[0]:
+                                    [xInt, yInt]=[self.borderDeterm(i-1)[0], y1]
+                            else:
+                                line1=[[x1, y1], [x2, y2]]
+                                if x1<self.borderDeterm(i-1)[0] or x1>self.borderDeterm(i-1)[1]: 
+                                    if x1<self.borderDeterm(i-1)[0]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[3]]]
+                                    elif x1>self.borderDeterm(i-1)[1]:
+                                        line2=[[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[3]]]
+                                    [xInt, yInt]=self.lineIntersection(line1, line2)
+                                    if yInt>self.borderDeterm(i-1)[3]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[3]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[3]]]
+                                    elif yInt<self.borderDeterm(i-1)[2]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[2]]]
+                                    [xInt, yInt]=self.lineIntersection(line1, line2)
+                                if y1<self.borderDeterm(i-1)[2] or y1>self.borderDeterm(i-1)[3]:
+                                    if y1<self.borderDeterm(i-1)[2]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[2]]]
+                                    elif y1>self.borderDeterm(i-1)[3]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[3]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[3]]]
+                                    [xInt, yInt]=self.lineIntersection(line1, line2)
+                                    if xInt>self.borderDeterm(i-1)[1]:
+                                        line2=[[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[1], self.borderDeterm(i-1)[3]]]
+                                    elif xInt<self.borderDeterm(i-1)[0]:
+                                        line2=[[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[2]],[self.borderDeterm(i-1)[0], self.borderDeterm(i-1)[3]]]
+                                    [xInt, yInt]=self.lineIntersection(line1, line2)
+                            self.numberOfSegment[0][i-1]=self.numberOfSegment[0][i-1]+self.portionLength([x1, y1], [xInt, yInt])
+                            self.numberOfSegment[0][i-2]=self.numberOfSegment[0][i-2]+1-self.portionLength([x1, y1], [xInt, yInt])        
+                    else:
+                        plusFlag=1
+                        if i==4:
+                            print("found")
+                        if x1==x2:
+                            if y2<self.borderDeterm(i)[2]:
+                                [xInt, yInt]=[x1,self.borderDeterm(i)[2]]
+                            elif y2>self.borderDeterm(i)[3]:
+                                [xInt, yInt]=[x1,self.borderDeterm(i)[3]]
+                        elif y1==y2:
+                            if x2<self.borderDeterm(i)[0]:
+                                [xInt, yInt]=[self.borderDeterm(i)[0], y1]
+                            elif x2>self.borderDeterm(i)[1]:
+                                [xInt, yInt]=[self.borderDeterm(i)[1], y1]
+                        else:
+                            line1=[[x1, y1], [x2, y2]]
+                            if x2<self.borderDeterm(i)[0] or x2>self.borderDeterm(i)[1]:
+                                if x2<self.borderDeterm(i)[0]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[2]],[self.borderDeterm(i)[0], self.borderDeterm(i)[3]]]
+                                elif x2>self.borderDeterm(i)[1]:
+                                    line2=[[self.borderDeterm(i)[1], self.borderDeterm(i)[2]],[self.borderDeterm(i)[1], self.borderDeterm(i)[3]]]
+                                [xInt, yInt]=self.lineIntersection(line1, line2)
+                                if yInt>self.borderDeterm(i)[3]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[3]],[self.borderDeterm(i)[1], self.borderDeterm(i)[3]]]
+                                elif yInt<self.borderDeterm(i)[2]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[2]],[self.borderDeterm(i)[1], self.borderDeterm(i)[2]]]
+                                [xInt, yInt]=self.lineIntersection(line1, line2)
+                            elif y2<self.borderDeterm(i)[2] or y2>self.borderDeterm(i)[3]:
+                                if y2<self.borderDeterm(i)[2]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[2]],[self.borderDeterm(i)[1], self.borderDeterm(i)[2]]]
+                                elif y2>self.borderDeterm(i)[3]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[3]],[self.borderDeterm(i)[1], self.borderDeterm(i)[3]]]
+                                [xInt, yInt]=self.lineIntersection(line1, line2)
+                                if xInt>self.borderDeterm(i)[1]:
+                                    line2=[[self.borderDeterm(i)[1], self.borderDeterm(i)[2]],[self.borderDeterm(i)[1], self.borderDeterm(i)[3]]]
+                                elif xInt<self.borderDeterm(i)[0]:
+                                    line2=[[self.borderDeterm(i)[0], self.borderDeterm(i)[2]],[self.borderDeterm(i)[0], self.borderDeterm(i)[3]]]
+                                [xInt, yInt]=self.lineIntersection(line1, line2)
+                        self.numberOfSegment[0][i-1]=self.numberOfSegment[0][i-1]+self.portionLength([x1, y1], [xInt, yInt])        
+                        self.numberOfSegment[0][i]=self.numberOfSegment[0][i]+1-self.portionLength([x1, y1], [xInt, yInt])
+        return self.numberOfSegment
+    def portionLength(self,A,B):
+        return (math.sqrt((A[0]-B[0])**2+(A[1]-B[1])**2)).real              
+    def lineIntersection(self,line1, line2):
+        xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+        ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1]) 
+        div =self.det(xdiff, ydiff)
+        d = (self.det(*line1), self.det(*line2))
+        xInt = self.det(d, xdiff) / div
+        yInt = self.det(d, ydiff) / div
+        return [xInt, yInt]
+    def det(self, a, b):
+        return a[0] * b[1] - a[1] * b[0]                
     def move(self, currentPosition):
         
         # If the current position is a corner
@@ -465,6 +595,6 @@ class polyExplorer(object):
         self.currentPosition = currentPosition
         self.nextPosition = nextPosition
         self.numberOfMoves -= 1
-            
+        self.numberOfSegment=self.segmentNum(currentPosition,nextPosition)
         return nextPosition
 
