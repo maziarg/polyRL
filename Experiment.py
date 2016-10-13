@@ -7,13 +7,14 @@ from ExplorationPolicy import polyExplorer
 from graphics import *
 from builtins import range
 from numpy import *
+from operator import truediv
 
 if __name__ == '__main__':
     
     
     numberOfMoves=20000
     stepSize=1
-    persistenceLength=200
+    persistenceLength=1000 
     polyexp= polyExplorer(numberOfMoves, stepSize, persistenceLength)
     #myTurtle= turtle()
     #anchorpoint= Point(polyexp.envparams.stateSpaceRange[0][1]/2,polyexp.envparams.stateSpaceRange[1][1]/2)
@@ -57,4 +58,15 @@ if __name__ == '__main__':
     win.postscript(file="image.eps", colormode='color')
     print("theta:",str(polyexp.theta))
     print("Number of segments in each square:",str(polyexp.numberOfSegment))
-    
+    x1=numberOfMoves/16
+    x2=x1*3
+    x3=x1*5
+    x4=x1*7
+    numberOfSegmentIdeal=[x1, x2, x3, x4]
+    Comparison=[]
+    for i in range(4):
+        Comparison.append(polyexp.numberOfSegment[0][i]/numberOfSegmentIdeal[i])
+    #Comparison=[(x)/y for x, y in zip(polyexp.numberOfSegment, numberOfSegmentIdeal)]
+    print(numberOfSegmentIdeal)
+    print(Comparison)
+    print("persistence length = ", str(persistenceLength))

@@ -38,7 +38,7 @@ class polyExplorer(object):
         self.currentPosition = [-1, -1]
         self.nextPosition = [-1, -1]
         self.numberOfMoves = self.numberOfsteps
-        self.STD=5
+        self.STD=0
         self.numberOfDivision=8 #must be even  
         self.numberOfSegment=zeros((1,self.numberOfDivision/2))     
         [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
@@ -268,14 +268,14 @@ class polyExplorer(object):
                         nextPosition = [currentPosition[0] + self.stepSize - distanceTravelled, currentPosition[1]]
                     if currentPosition[0] == self.envparams.stateSpaceRange[0][1]:
                         nextPosition = [currentPosition[0] - self.stepSize - distanceTravelled, currentPosition[1]]
-                if (abs(nextPosition[0] - currentPosition[0]) > abs(nextPosition[1] - currentPosition[1])):
+                elif (abs(nextPosition[0] - currentPosition[0]) > abs(nextPosition[1] - currentPosition[1])):
                     currentPosition = nextPosition
                     if currentPosition[1] == self.envparams.stateSpaceRange[1][0]:
                         nextPosition = [currentPosition[0], currentPosition[1] + self.stepSize - distanceTravelled]
                     if currentPosition[1] == self.envparams.stateSpaceRange[1][1]:
                         nextPosition = [currentPosition[0], currentPosition[1] - self.stepSize - distanceTravelled]
                 
-                if (abs(nextPosition[0] - currentPosition[0]) == abs(nextPosition[1] - currentPosition[1])):
+                elif (abs(nextPosition[0] - currentPosition[0]) == abs(nextPosition[1] - currentPosition[1])):
                     if random.randint(0, 1) == 0:
                         currentPosition = nextPosition
                         if currentPosition[0] == self.envparams.stateSpaceRange[0][0]:
@@ -316,6 +316,55 @@ class polyExplorer(object):
                 self.setBaseTheta(((self.theta_base) + self.theta) % 360)
             else:
                 self.setBaseTheta(((self.theta_base) - self.theta + 360) % 360)
+        else:
+            self.setBaseTheta(((self.theta_base) - self.theta + 360) % 360)
+            directionalAngle = self.theta_base
+            x = position[0] + self.stepSize * math.cos(math.radians(directionalAngle))
+            y = position[1] + self.stepSize * math.sin(math.radians(directionalAngle))
+            if x<self.envparams.stateSpaceRange[0][0] or x>self.envparams.stateSpaceRange[0][1] or y<self.envparams.stateSpaceRange[1][0] or y>self.envparams.stateSpaceRange[1][1]:
+                self.setBaseTheta(((self.theta_base) + self.theta) % 360)
+                directionalAngle = self.theta_base
+                x = position[0] + self.stepSize * math.cos(math.radians(directionalAngle))
+                y = position[1] + self.stepSize * math.sin(math.radians(directionalAngle)) 
+                if x<self.envparams.stateSpaceRange[0][0] or x>self.envparams.stateSpaceRange[0][1] or y<self.envparams.stateSpaceRange[1][0] or y>self.envparams.stateSpaceRange[1][1]:
+                    if position[0]==self.envparams.stateSpaceRange[0][0] or position[0]==self.envparams.stateSpaceRange[0][1]:
+                        if position[1]>self.currentPosition[1]:
+                            x=position[0]
+                            y=position[1]+self.stepSize
+                            self.theta_base=90
+                            self.setBaseTheta(self.theta_base)
+                        elif position[1]<self.currentPosition[1]:
+                            x=position[0]
+                            y=position[1]-self.stepSize
+                            self.theta_base=270
+                            self.setBaseTheta(self.theta_base)
+                        else:
+                            HT = random.randint(0, 1)
+                            if HT == 0:
+                                self.theta_base=90
+                                self.setBaseTheta(self.theta_base)
+                            else:
+                                self.theta_base=270
+                                self.setBaseTheta(self.theta_base)
+                    elif position[1]==self.envparams.stateSpaceRange[1][0] or position[1]==self.envparams.stateSpaceRange[1][1]:
+                        if position[0]>self.currentPosition[0]:
+                            y=position[1]
+                            x=position[0]+self.stepSize
+                            self.theta_base=0
+                            self.setBaseTheta(self.theta_base)
+                        elif position[0]<self.currentPosition[0]:
+                            y=position[1]
+                            x=position[0]-self.stepSize
+                            self.theta_base=180
+                            self.setBaseTheta(self.theta_base)
+                        else:
+                            HT = random.randint(0, 1)
+                            if HT == 0:
+                                self.theta_base=0
+                                self.setBaseTheta(self.theta_base)
+                            else:
+                                self.theta_base=180
+                                self.setBaseTheta(self.theta_base)
         directionalAngle = self.theta_base
         x = position[0] + self.stepSize * math.cos(math.radians(directionalAngle))
         y = position[1] + self.stepSize * math.sin(math.radians(directionalAngle))
@@ -484,6 +533,10 @@ class polyExplorer(object):
         return a[0] * b[1] - a[1] * b[0]                
     def move(self, currentPosition):
         
+        if currentPosition[0]==self.envparams.stateSpaceRange[0][0] or currentPosition[0]==self.envparams.stateSpaceRange[0][1] or currentPosition[1]==self.envparams.stateSpaceRange[1][0] or currentPosition[1]==self.envparams.stateSpaceRange[1][1]:
+            if self.wallVisitFlag==0:
+                print("zero")
+            self.wallVisitFlag=1
         # If the current position is a corner
         if self.cornerIndex == 1:
             [x,y]=self.corner(currentPosition)
