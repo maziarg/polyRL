@@ -6,6 +6,7 @@ Created on Oct 17, 2016
 import random
 import numpy as np
 import math
+import random
 from envParams import envParams
 from ExplorationPolicy import polyExplorer 
 
@@ -15,37 +16,56 @@ class QLearner(object):
     '''
 
 
-    def __init__(self, learningRate, epsilon):
+    def __init__(self, learningRate, epsilon, actionSampleingDensity, polyExplorar):
         #Should initialize the weight vector
-        self.weightVectorDim=envParams.stateFeatureDim+envParams.actionFeatureDim
+        self.envparams = envParams()
+        self.weightVectorDim=self.envparams.stateFeatureDim+self.envparams.actionFeatureDim
         self.weightVector=np.zeros(self.weightVectorDim)
         self.epsilon= epsilon
         self.numberOfMoves=20000
         self.stepSize=1
         self.persistenceLength=200
-        self.polyexp= polyExplorer(self.numberOfMoves, self.stepSize, self.persistenceLength)
+        self.polyexp= polyExplorar
+        self.LearnigRate= learningRate
+        self.actionSampleingDesnisty= actionSampleingDensity
+        
+    def setEpsilon(self, epsilon):
+        self.epsilon=epsilon
         
     def phi(self, state, action) :
-        weightVec=np.zeros(envParams.stateFeatureDim+envParams.actionFeatureDim)
-        actionWidth=math.floor(((envParams.angleRange[1]-envParams.angleRange[0])/envParams.actionFeatureDim))
-        actionRegion= math.floor(action*actionWidth/(envParams.angleRange[1]-envParams.angleRange[0]))
-        weightVec[actionRegion+envParams.stateFeatureDim-1]=1
-        gridDiag= math.floor((envParams.gridXscale**2+envParams.gridYscale**2)**0.5)
+        phiVec=np.zeros(self.envparams.stateFeatureDim+self.envparams.actionFeatureDim)
+        #actionWidth=math.floor(((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim))
+        actionRegion= math.floor(action*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))
+        phiVec[actionRegion+self.envparams.stateFeatureDim-1]=1
+        gridDiag= math.floor((self.envparams.gridXscale**2+self.envparams.gridYscale**2)**0.5)
         x=int(state[0])
         y=int(state[1])
-        stateWidth = math.floor(gridDiag/envParams.stateFeatureDim)
+        stateWidth = math.floor(gridDiag/self.envparams.stateFeatureDim)
         stateRegion= math.floor(((x**2+y**2)**0.5)/stateWidth)
-        weightVec[stateRegion]=1
-        
+        phiVec[stateRegion]=1
+        return phiVec
         #returns a vector in self.weightVector Dim
            
     
     def getQValue(self, state , action):
-        return np.dot(self.weightVector,self.Phi(state,action))  
+        return np.dot(self.weightVector,self.phi(state,action))  
+    
+    def sampelActionSet(self):
+        step = math.floor((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.actionSampleingDesnisty)
+        sampledActionSet=[]
+        for i in range(self.actionSampleingDesnisty):
+            temp=random.choice(range(self.envparams.angleRange[0], self.envparams.angleRange[1], step))
+            if temp in sampledActionSet:
+                i-=1
+                continue
+            else:
+                sampledActionSet.append(temp)
+        return sampledActionSet
+        
     
     def getValue(self, state):
-        sampledActionSet= self.sampelActionSet()
-        maxTemp= envParams.regularReward
+        sampledActionSet =self.sampelActionSet()
+        maxTemp= self.envparams.regularReward
         for action in sampledActionSet:
             if self.getQValue(state, action)>maxTemp:
                 maxTemp=self.getQValue(state, action)
@@ -64,9 +84,19 @@ class QLearner(object):
             else:
                 continue
         return action
-        
+    def isInGoalZone(self,state):
+        if state[0]<=self.envparams.goalZone[1][0] and state[0]>=self.envparams.goalZone[0][0] and state[1]<=self.envparams.goalZone[1][1] and state[0]>=self.envparams.goalZone[1][0]:
+            return True
+        else:
+            return False
+    
+    def getReward(self, state):
+        if self.isInGoalZone(state):
+            return self.envparams.goalReward
+        else:
+            return self.envparams.regularReward
     def decision(self):
-        if np.random.rand()<=self.epsilon:
+        if random.uniform(0, 1)<=self.epsilon:
             return 0
         else:
             return 1
@@ -81,13 +111,13 @@ class QLearner(object):
         return action
     
     def update(self, state, action, nextState, reward):
-        qError= reward + envParams.discountFactor*self.getValue(nextState)-self.getQValue(state, action)
-        self.weightVector=self.weightVector+ envParams.learningRate*qError*self.phi(state,action)
+        qError= reward + self.envparams.discountFactor*self.getValue(nextState)-self.getQValue(state, action)
+        self.weightVector=self.weightVector+ self.LearnigRate*qError*self.phi(state,action)
         return self.weightVector
     
             
                       
-        
+    
         
         
         

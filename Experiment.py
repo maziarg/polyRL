@@ -7,19 +7,26 @@ from ExplorationPolicy import polyExplorer
 from graphics import *
 from builtins import range
 from numpy import *
-from operator import truediv
+from qLearner import QLearner
 
 if __name__ == '__main__':
     
     
     numberOfMoves=20000
+    numberOfPureExpMoves=1000
     stepSize=1
-    persistenceLength=1000 
+    persistenceLength=200
+    learningRate=0.1
+    epsilon=0.99
+    epsilon_init=1 
+    actionSampleingDensity=10
+    
     polyexp= polyExplorer(numberOfMoves, stepSize, persistenceLength)
     #myTurtle= turtle()
     #anchorpoint= Point(polyexp.envparams.stateSpaceRange[0][1]/2,polyexp.envparams.stateSpaceRange[1][1]/2)
     #image= Image(anchorpoint, polyexp.envparams.stateSpaceRange[0][1], polyexp.envparams.stateSpaceRange[1][1])
-    
+    qAgent = QLearner(learningRate, epsilon, actionSampleingDensity, polyexp)
+    weightVec= qAgent.weightVector
     initPosition=polyexp.drawInitState()
     tempState=initPosition
     angle=polyexp.theta_0
@@ -41,32 +48,30 @@ if __name__ == '__main__':
     cir3.draw(win)
     cir4 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), 5)
     cir4.draw(win)
+    line = Line(Point(polyexp.envparams.goalZone[0][0],polyexp.envparams.goalZone[1][0]), Point(polyexp.envparams.goalZone[0][1],polyexp.envparams.goalZone[1][1]))
+    line.draw(win)
     for i in range(numberOfMoves):
-        xCoordinate=tempState
-        #print("angle #"+str(i)+ " = "+str(angle))
-        print("move #"+str(i)+ " = "+str(tempState))
-        angle=polyexp.theta_base
-        #print("theta_base = "+str(i)+ " = "+str(angle))
-        tempState=polyexp.move(tempState)
-        yCoordinate=tempState
-        line = Line(Point(xCoordinate[0],xCoordinate[1]), Point(yCoordinate[0],yCoordinate[1]))
+        if i<numberOfPureExpMoves:
+            qAgent.setEpsilon(epsilon_init)
+        else:
+            qAgent.setEpsilon(epsilon)
+        action=qAgent.getAction(tempState)
+        print("action= "+str(action))
+        polyexp.setBaseTheta(action)
+        oldState=tempState
+        print("move #"+str(i)+ " = "+str(oldState))
+        tempState=polyexp.move(oldState)
+        newState=tempState
+        reward=qAgent.getReward(newState)
+        weightVec=qAgent.update(oldState, action, newState, reward)
+        line = Line(Point(oldState[0],oldState[1]), Point(newState[0],newState[1]))
         line.draw(win)
         
         #sety(tempState)
-        #goto(xCoordinate,yCoordinate)
+        #goto(oldState,newState)
     # saves the current TKinter object in postscript format
     win.postscript(file="image.eps", colormode='color')
     print("theta:",str(polyexp.theta))
     print("Number of segments in each square:",str(polyexp.numberOfSegment))
-    x1=numberOfMoves/16
-    x2=x1*3
-    x3=x1*5
-    x4=x1*7
-    numberOfSegmentIdeal=[x1, x2, x3, x4]
-    Comparison=[]
-    for i in range(4):
-        Comparison.append(polyexp.numberOfSegment[0][i]/numberOfSegmentIdeal[i])
-    #Comparison=[(x)/y for x, y in zip(polyexp.numberOfSegment, numberOfSegmentIdeal)]
-    print(numberOfSegmentIdeal)
-    print(Comparison)
-    print("persistence length = ", str(persistenceLength))
+    print("weight vector: "+ str(weightVec))
+    

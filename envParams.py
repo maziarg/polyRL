@@ -13,7 +13,7 @@ class envParams(object):
     def __init__(self):
         self.stateSpaceDim=2
         self.stateSpaceRange=[[5,405],[5,405]]
-        self.angleRange=[0,359.99]
+        self.angleRange=[0,360]
         self.initStateDist="uniform"  
         self.initThetaDist = "uniform"   
         self.gridXscale=400
@@ -24,4 +24,4 @@ class envParams(object):
         self.goalReward=100
         self.regularReward=-1
         self.discountFactor=0.99
-        self.learningRate=0.1
+        
