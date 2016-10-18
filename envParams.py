@@ -18,3 +18,10 @@ class envParams(object):
         self.initThetaDist = "uniform"   
         self.gridXscale=400
         self.gridYscale=400
+        self.stateFeatureDim=10
+        self.actionFeatureDim=10
+        self.goalZone=[[395,405],[195,205]]
+        self.goalReward=100
+        self.regularReward=-1
+        self.discountFactor=0.99
+        self.learningRate=0.1
