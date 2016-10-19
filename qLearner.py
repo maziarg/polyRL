@@ -16,7 +16,7 @@ class QLearner(object):
     '''
 
 
-    def __init__(self, learningRate, epsilon, actionSampleingDensity, polyExplorar):
+    def __init__(self, learningRate, epsilon, actionSamplingDensity, polyExplorar):
         #Should initialize the weight vector
         self.envparams = envParams()
         self.weightVectorDim=self.envparams.stateFeatureDim+self.envparams.actionFeatureDim
@@ -26,8 +26,12 @@ class QLearner(object):
         self.stepSize=1
         self.persistenceLength=200
         self.polyexp= polyExplorar
-        self.LearnigRate= learningRate
-        self.actionSampleingDesnisty= actionSampleingDensity
+        self.LearningRate= learningRate
+        self.actionSamplingDensity= actionSamplingDensity
+        self.exploitFlag=0
+        self.weightHeatMap=np.zeros((self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0],self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0]))
+
+            
         
     def setEpsilon(self, epsilon):
         self.epsilon=epsilon
@@ -37,12 +41,12 @@ class QLearner(object):
         #actionWidth=math.floor(((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim))
         actionRegion= math.floor(action*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))
         phiVec[actionRegion+self.envparams.stateFeatureDim-1]=1
-        gridDiag= math.floor((self.envparams.gridXscale**2+self.envparams.gridYscale**2)**0.5)
+        gridDiag= math.floor((self.envparams.gridXLength**2+self.envparams.gridXLength**2)**0.5)
         x=int(state[0])
         y=int(state[1])
         stateWidth = math.floor(gridDiag/self.envparams.stateFeatureDim)
         stateRegion= math.floor(((x**2+y**2)**0.5)/stateWidth)
-        phiVec[stateRegion]=1
+        phiVec[stateRegion-1]=1
         return phiVec
         #returns a vector in self.weightVector Dim
            
@@ -50,11 +54,41 @@ class QLearner(object):
     def getQValue(self, state , action):
         return np.dot(self.weightVector,self.phi(state,action))  
     
-    def sampelActionSet(self):
-        step = math.floor((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.actionSampleingDesnisty)
+    def sampleActionSet(self,state):
+        wallIndicator=self.polyexp.isOnWall(state)
+        if not wallIndicator:
+            lower=self.envparams.angleRange[0]
+            upper=self.envparams.angleRange[1]
+        elif state[0]==self.envparams.stateSpaceRange[0][0]:
+            if state[1]==self.envparams.stateSpaceRange[1][0]:
+                lower=0
+                upper=90
+            elif state[1]==self.envparams.stateSpaceRange[1][1]:
+                lower=-90
+                upper=0
+            else:
+                lower=-90
+                upper=90
+        elif state[0]==self.envparams.stateSpaceRange[0][1]:
+            if state[1]==self.envparams.stateSpaceRange[1][0]:
+                lower=90
+                upper=180
+            elif state[1]==self.envparams.stateSpaceRange[1][1]:
+                lower=180
+                upper=270
+            else:
+                lower=90
+                upper=270
+        elif state[1]==self.envparams.stateSpaceRange[1][0]:
+                lower=0
+                upper=180
+        elif state[1]==self.envparams.stateSpaceRange[1][1]:
+                lower=180
+                upper=360
+        step = math.floor((upper-lower)/self.actionSamplingDensity)
         sampledActionSet=[]
-        for i in range(self.actionSampleingDesnisty):
-            temp=random.choice(range(self.envparams.angleRange[0], self.envparams.angleRange[1], step))
+        for i in range(self.actionSamplingDensity):
+            temp=random.choice(range(lower+(i)*step, lower+(i+1)*step))
             if temp in sampledActionSet:
                 i-=1
                 continue
@@ -64,7 +98,7 @@ class QLearner(object):
         
     
     def getValue(self, state):
-        sampledActionSet =self.sampelActionSet()
+        sampledActionSet =self.sampleActionSet(state)
         maxTemp= self.envparams.regularReward
         for action in sampledActionSet:
             if self.getQValue(state, action)>maxTemp:
@@ -74,7 +108,7 @@ class QLearner(object):
         return maxTemp
     
     def getPolicy(self, state):
-        sampledActionSet= self.sampelActionSet()
+        sampledActionSet= self.sampleActionSet(state)
         action= self.polyexp.theta_base
         maxTemp=self.getQValue(state, action)
         for act in sampledActionSet:
@@ -85,7 +119,9 @@ class QLearner(object):
                 continue
         return action
     def isInGoalZone(self,state):
-        if state[0]<=self.envparams.goalZone[1][0] and state[0]>=self.envparams.goalZone[0][0] and state[1]<=self.envparams.goalZone[1][1] and state[0]>=self.envparams.goalZone[1][0]:
+        radious= math.floor(((int(state[0])**2+int(state[1])**2)**0.5).real)
+        
+        if radious>=self.envparams.goalZoneRin and radious<=self.envparams.goalZoneRout:
             return True
         else:
             return False
@@ -96,10 +132,11 @@ class QLearner(object):
         else:
             return self.envparams.regularReward
     def decision(self):
+        self.exploitFlag=0
         if random.uniform(0, 1)<=self.epsilon:
-            return 0
+            return 0 #Explore
         else:
-            return 1
+            return 1  #Exploit
     
     def getAction(self,state):
         
@@ -107,12 +144,13 @@ class QLearner(object):
             #Exploration only
             action= self.polyexp.theta_base
         else:
+            self.exploitFlag=1
             action= self.getPolicy(state)
         return action
     
     def update(self, state, action, nextState, reward):
         qError= reward + self.envparams.discountFactor*self.getValue(nextState)-self.getQValue(state, action)
-        self.weightVector=self.weightVector+ self.LearnigRate*qError*self.phi(state,action)
+        self.weightVector=self.weightVector+ self.LearningRate*qError*self.phi(state,action)
         return self.weightVector
     
             

@@ -38,7 +38,7 @@ class polyExplorer(object):
         self.currentPosition = [-1, -1]
         self.nextPosition = [-1, -1]
         self.numberOfMoves = self.numberOfsteps
-        self.STD=5
+        self.STD=0
         self.numberOfDivision=8 #must be even  
         self.numberOfSegment=zeros((1,self.numberOfDivision/2))     
         [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
@@ -595,6 +595,6 @@ class polyExplorer(object):
         self.currentPosition = currentPosition
         self.nextPosition = nextPosition
         self.numberOfMoves -= 1
-        self.numberOfSegment=self.segmentNum(currentPosition,nextPosition)
+        #self.numberOfSegment=self.segmentNum(currentPosition,nextPosition)
         return nextPosition
 
