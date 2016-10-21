@@ -28,4 +28,5 @@ class envParams(object):
         self.regularReward=0
         self.wallReward=-1
         self.discountFactor=0.9
+        self.actionSTD=17
         

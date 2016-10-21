@@ -43,7 +43,7 @@ class polyExplorer(object):
         self.numberOfSegment=zeros((1,self.numberOfDivision/2))     
         [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
         self.directionFlag=0
-        
+        self.exploit=0
           
     def setBaseTheta(self, theta_base):
         self.theta_base = theta_base
@@ -526,6 +526,10 @@ class polyExplorer(object):
                         self.nextPosition=[x,y]
                 return directionalAngle
         [x,y]=self.nextPosition
+        if self.exploit==1:
+            directionalAngle=self.theta_base
+            x = currentPosition[0] + self.stepSize * math.cos(math.radians(directionalAngle))
+            y = currentPosition[1] + self.stepSize * math.sin(math.radians(directionalAngle))    
         xflag = 0
         yflag = 0
         if not self.xIsInRange(x):

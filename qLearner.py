@@ -82,7 +82,8 @@ class QLearner(object):
         return phiIndex    
     
     def getQValue(self, state , action):
-        return np.dot(self.weightVector,self.phi(state,action)) 
+        qValue=np.dot(self.weightVector,self.phi(state,action))
+        return qValue
     
 #     def actionRange(self,state): 
 #         wallIndicator=self.polyexp.isOnWall(state)
@@ -138,7 +139,6 @@ class QLearner(object):
         actionSameQ=[]
         actionSameQFlag=0
         for action in sampledActionSet:
-            s=self.getQValue(state, action)
             if self.getQValue(state, action)>maxTemp:
                 actionSameQFlag=0
                 maxTemp=self.getQValue(state, action)
@@ -155,14 +155,31 @@ class QLearner(object):
     
     def getPolicy(self, state):
         sampledActionSet= self.sampleActionSet(state)
-        action= self.polyexp.theta_base
-        maxTemp=self.getQValue(state, action)
+        maxTemp= self.getQValue(state, sampledActionSet[0])
+#         action= self.polyexp.theta_base
+#         maxTemp=self.getQValue(state, action)
+        actionSameQ=[]
+        actionSameQFlag=0
         for act in sampledActionSet:
+            s=self.getQValue(state, act)
             if self.getQValue(state, act)>maxTemp:
+                actionSameQFlag=0
                 maxTemp=self.getQValue(state, act)
+                actionSameQ=[]
+                actionSameQ.append(act)
                 action=act
+            elif self.getQValue(state, act)==maxTemp:
+                actionSameQ.append(act)
+                actionSameQFlag=1
             else:
                 continue
+        if actionSameQFlag==1 and self.getQValue(state, actionSameQ[0])>=maxTemp:
+            action=random.choice(actionSameQ)
+        actionRegion= math.floor((action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))+1
+        if (action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim%(self.envparams.angleRange[1]-self.envparams.angleRange[0])==0:
+            actionRegion=actionRegion-1
+        meanOfActionRegion=self.envparams.angleRange[0]+(2*actionRegion-1)*(self.envparams.angleRange[1]-self.envparams.angleRange[0])/(2*self.envparams.actionFeatureDim)
+        action=np.random.normal(meanOfActionRegion,self.envparams.actionSTD)
         return action
     
     def goalZone(self):
@@ -191,8 +208,6 @@ class QLearner(object):
             return 1  #Exploit
     
     def getAction(self,state):
-        if self.polyexp.isOnWall(state):
-            print("Yes!")
         if self.decision()==0:
             #Exploration only
             self.polyexp.directionFlag=1
@@ -200,7 +215,9 @@ class QLearner(object):
             self.polyexp.directionFlag=0
         else:
             self.exploitFlag=1
+            self.polyexp.exploit=1
             action= self.getPolicy(state)
+            self.polyexp.theta_base=action
         return action
     
     def update(self, state, action, nextState, reward):
