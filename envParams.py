@@ -12,19 +12,20 @@ class envParams(object):
 
     def __init__(self):
         self.stateSpaceDim=2
-        self.stateSpaceRange=[[5,505],[5,505]]
+        self.stateSpaceRange=[[5,405],[5,405]]
         self.angleRange=[0,360]
         self.initStateDist="uniform"  
         self.initThetaDist = "uniform"   
         self.gridXscale=400
         self.gridYscale=400
-        self.gridXLength=500
-        self.gridYLength=500
-        self.stateFeatureDim=500
-        self.actionFeatureDim=350
-        self.goalZoneRin=30
-        self.goalZoneRout=50
-        self.goalReward=100
-        self.regularReward=-1
-        self.discountFactor=0.99
+#         self.gridXLength=500
+#         self.gridYLength=500
+        self.stateFeatureDimX=10
+        self.stateFeatureDimY=5
+        self.stateFeatureDim=self.stateFeatureDimX*self.stateFeatureDimY
+        self.actionFeatureDim=10
+        self.goalReward=10
+        self.regularReward=0
+        self.wallReward=-1
+        self.discountFactor=0.9
         

@@ -24,11 +24,11 @@ simple example, here is a complete program to draw a circle of radius
 from graphics import *
 
 def main():
-    win = GraphWin("My Circle", 100, 100)
+    win1 = GraphWin("My Circle", 100, 100)
     c = Circle(Point(50,50), 10)
-    c.draw(win)
-    win.getMouse() # Pause to view result
-    win.close()    # Close window when done
+    c.draw(win1)
+    win1.getMouse() # Pause to view result
+    win1.close()    # Close window when done
 
 main()
 --------------------------------------------------------------------
@@ -962,15 +962,15 @@ def color_rgb(r,g,b):
     return "#%02x%02x%02x" % (r,g,b)
 
 def test():
-    win = GraphWin()
-    win.setCoords(0,0,10,10)
+    win1 = GraphWin()
+    win1.setCoords(0,0,10,10)
     t = Text(Point(5,5), "Centered Text")
-    t.draw(win)
+    t.draw(win1)
     p = Polygon(Point(1,1), Point(5,3), Point(2,7))
-    p.draw(win)
+    p.draw(win1)
     e = Entry(Point(5,6), 10)
-    e.draw(win)
-    win.getMouse()
+    e.draw(win1)
+    win1.getMouse()
     p.setFill("red")
     p.setOutline("blue")
     p.setWidth(2)
@@ -981,29 +981,29 @@ def test():
     e.setFill("green")
     e.setText("Spam!")
     e.move(2,0)
-    win.getMouse()
+    win1.getMouse()
     p.move(2,3)
     s = ""
     for pt in p.getPoints():
         s = s + "(%0.1f,%0.1f) " % (pt.getX(), pt.getY())
     t.setText(s)
-    win.getMouse()
+    win1.getMouse()
     p.undraw()
     e.undraw()
     t.setStyle("bold")
-    win.getMouse()
+    win1.getMouse()
     t.setStyle("normal")
-    win.getMouse()
+    win1.getMouse()
     t.setStyle("italic")
-    win.getMouse()
+    win1.getMouse()
     t.setStyle("bold italic")
-    win.getMouse()
+    win1.getMouse()
     t.setSize(14)
-    win.getMouse()
+    win1.getMouse()
     t.setFace("arial")
     t.setSize(20)
-    win.getMouse()
-    win.close()
+    win1.getMouse()
+    win1.close()
 
 #MacOS fix 2
 #tk.Toplevel(_root).destroy()

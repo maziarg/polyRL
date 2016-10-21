@@ -3,10 +3,10 @@ Created on Sep 7, 2016
 @author: mgomrokchi
 '''
 from envParams import envParams
+from qLearner import QLearner
 import numpy as np
 import math
 import random
-from _overlapped import NULL
 from cmath import sqrt
 from numpy import zeros
 class polyExplorer(object):
@@ -42,6 +42,7 @@ class polyExplorer(object):
         self.numberOfDivision=8 #must be even  
         self.numberOfSegment=zeros((1,self.numberOfDivision/2))     
         [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
+        self.directionFlag=0
         
           
     def setBaseTheta(self, theta_base):
@@ -323,46 +324,64 @@ class polyExplorer(object):
         return [x, y]
     
     def isOnWall(self, position):
-        if self.envparams.stateSpaceRange[0][0] == position[0] and self.yIsInRange(position[1]):
+#         if self.envparams.stateSpaceRange[0][0] == position[0] and self.yIsInRange(position[1]):
+#             return True
+#         if self.envparams.stateSpaceRange[0][1] == position[0] and self.yIsInRange(position[1]):
+#             return True
+#         if self.envparams.stateSpaceRange[1][0] == position[1] and self.xIsInRange(position[0]):
+#             return True
+#         if self.envparams.stateSpaceRange[1][1] == position[1] and self.xIsInRange(position[0]):
+#             return True
+        if self.envparams.stateSpaceRange[0][0] == position[0]:
             return True
-        if self.envparams.stateSpaceRange[0][1] == position[0] and self.yIsInRange(position[1]):
+        elif self.envparams.stateSpaceRange[0][1] == position[0]:
             return True
-        if self.envparams.stateSpaceRange[1][0] == position[1] and self.xIsInRange(position[0]):
+        elif self.envparams.stateSpaceRange[1][0] == position[1]:
             return True
-        if self.envparams.stateSpaceRange[1][1] == position[1] and self.xIsInRange(position[0]):
+        elif self.envparams.stateSpaceRange[1][1] == position[1]:
             return True
     def corner(self,currentPosition):
         self.cornerIndex = 0
+        directionAngle=0
         if self.theta_base == 90:
             if currentPosition[0] == self.envparams.stateSpaceRange[0][1]:  
                 x = currentPosition[0] - self.stepSize
                 y = currentPosition[1]
+                directionAngle = 180
             else: 
                 x = currentPosition[0] + self.stepSize
                 y = currentPosition[1]
+                directionAngle = 0
         elif self.theta_base == 270:
             if  currentPosition[0] == self.envparams.stateSpaceRange[0][1]:  
                 x = currentPosition[0] - self.stepSize
                 y = currentPosition[1]
+                directionAngle = 180
             else:
                 x = currentPosition[0] + self.stepSize
                 y = currentPosition[1]
+                directionAngle = 0
         elif self.theta_base == 0:
             if  currentPosition[1] == self.envparams.stateSpaceRange[1][1]:  
                 x = currentPosition[0]
                 y = currentPosition[1] - self.stepSize
+                directionAngle = 270
             else:
                 x = currentPosition[0]
                 y = currentPosition[1] + self.stepSize
+                directionAngle = 90
         else:
             #self.theta_base == 180:
             if  currentPosition[1] == self.envparams.stateSpaceRange[1][1]:  
                 x = currentPosition[0]
                 y = currentPosition[1] - self.stepSize
+                directionAngle = 270
             else:
                 x = currentPosition[0]
                 y = currentPosition[1] + self.stepSize
-        return [x,y]
+                directionAngle = 90
+                
+        return [x,y,directionAngle]  
     def setDivisionSize(self):
         xSize=(self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0])/self.numberOfDivision
         ySize=(self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0])/self.numberOfDivision
@@ -483,23 +502,30 @@ class polyExplorer(object):
     def det(self, a, b):
         return a[0] * b[1] - a[1] * b[0]                
     def move(self, currentPosition):
-        
+        if self.directionFlag==1:
         # If the current position is a corner
-        if self.cornerIndex == 1:
-            [x,y]=self.corner(currentPosition)
-        else:
-            if self.numberOfsteps == self.numberOfMoves:
-                directionalAngle = self.theta_0
-                x = currentPosition[0] + self.stepSize * math.cos(math.radians(directionalAngle))
-                y = currentPosition[1] + self.stepSize * math.sin(math.radians(directionalAngle))
-                
+            if self.cornerIndex == 1:
+                [x,y]=[self.corner(currentPosition)[0], self.corner(currentPosition)[1]]
+                directionalAngle = self.corner(currentPosition)[2]
+                self.nextPosition=[x,y]
             else:
-                if self.wallVisitFlag==1:
-                    [x,y]=self.deflectIn(currentPosition)
-                else:
-                    directionalAngle = self.computeDirectionalAngle()
+                if self.numberOfsteps == self.numberOfMoves:
+                    directionalAngle = self.theta_0
                     x = currentPosition[0] + self.stepSize * math.cos(math.radians(directionalAngle))
                     y = currentPosition[1] + self.stepSize * math.sin(math.radians(directionalAngle))
+                    self.nextPosition=[x,y]
+                else:
+                    if self.wallVisitFlag==1:
+                        [x,y]=self.deflectIn(currentPosition)
+                        directionalAngle= self.theta_base
+                        self.nextPosition=[x,y]
+                    else:
+                        directionalAngle = self.computeDirectionalAngle()
+                        x = currentPosition[0] + self.stepSize * math.cos(math.radians(directionalAngle))
+                        y = currentPosition[1] + self.stepSize * math.sin(math.radians(directionalAngle))
+                        self.nextPosition=[x,y]
+                return directionalAngle
+        [x,y]=self.nextPosition
         xflag = 0
         yflag = 0
         if not self.xIsInRange(x):
@@ -542,7 +568,7 @@ class polyExplorer(object):
         while(totalTravDist < self.stepSize):
             if (currentPosition[0]==self.envparams.stateSpaceRange[0][0] or currentPosition[0]==self.envparams.stateSpaceRange[0][1]) and (currentPosition[1]==self.envparams.stateSpaceRange[1][0] or currentPosition[1]==self.envparams.stateSpaceRange[1][1]):
                 #self.wallVisitFlag = 1
-                nextPosition= self.corner(currentPosition)
+                nextPosition= [self.corner(currentPosition)[0], self.corner(currentPosition)[1]]
             else:
                 nextPosition, currentPosition = self.deflect(currentPosition, nextPosition, xflag, yflag, totalTravDist)
             

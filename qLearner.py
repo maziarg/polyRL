@@ -7,8 +7,9 @@ import random
 import numpy as np
 import math
 import random
+from graphics import *
 from envParams import envParams
-from ExplorationPolicy import polyExplorer 
+from argparse import Action
 
 class QLearner(object):
     '''
@@ -16,22 +17,39 @@ class QLearner(object):
     '''
 
 
-    def __init__(self, learningRate, epsilon, actionSamplingDensity, polyExplorar):
+    def __init__(self, learningRate, epsilon, actionSamplingDensity, polyExplorer):
         #Should initialize the weight vector
         self.envparams = envParams()
         self.weightVectorDim=self.envparams.stateFeatureDim+self.envparams.actionFeatureDim
         self.weightVector=np.zeros(self.weightVectorDim)
         self.epsilon= epsilon
-        self.numberOfMoves=20000
         self.stepSize=1
         self.persistenceLength=200
-        self.polyexp= polyExplorar
+        self.polyexp= polyExplorer
         self.LearningRate= learningRate
         self.actionSamplingDensity= actionSamplingDensity
         self.exploitFlag=0
-        self.weightHeatMap=np.zeros((self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0],self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0]))
+        self.goalRegion=0
+        self.stateRegionXLength=(self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0])/self.envparams.stateFeatureDimX
+        self.stateRegionYLength=(self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0])/self.envparams.stateFeatureDimY
+#         self.weightHeatMap=np.zeros((self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0],self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0]))
 
-            
+    def goalBorders(self):
+        yMod=self.goalRegion%self.envparams.stateFeatureDimX
+        if yMod==0:
+            yBorderL=(math.floor(self.goalRegion/self.envparams.stateFeatureDimX)-1)*self.stateRegionYLength+self.envparams.stateSpaceRange[1][0]
+        else:       
+            yBorderL=math.floor(self.goalRegion/self.envparams.stateFeatureDimX)*self.stateRegionYLength+self.envparams.stateSpaceRange[1][0]
+        yBorderU=yBorderL+self.stateRegionYLength
+        xMod=self.goalRegion%self.envparams.stateFeatureDimX
+        if xMod==0:
+            xBorderL=(self.goalRegion-1-(math.floor(self.goalRegion/self.envparams.stateFeatureDimX)-1)*self.envparams.stateFeatureDimX)*self.stateRegionXLength+self.envparams.stateSpaceRange[0][0]
+        else:
+            xBorderL=(self.goalRegion-1-math.floor(self.goalRegion/self.envparams.stateFeatureDimX)*self.envparams.stateFeatureDimX)*self.stateRegionXLength+self.envparams.stateSpaceRange[0][0]
+        xBorderU=xBorderL+self.stateRegionXLength
+        point1=Point(xBorderL,yBorderL)
+        point2=Point(xBorderU,yBorderU)
+        return [point1,point2]
         
     def setEpsilon(self, epsilon):
         self.epsilon=epsilon
@@ -39,72 +57,100 @@ class QLearner(object):
     def phi(self, state, action) :
         phiVec=np.zeros(self.envparams.stateFeatureDim+self.envparams.actionFeatureDim)
         #actionWidth=math.floor(((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim))
-        actionRegion= math.floor(action*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))
+#         actionRegion= math.floor(action*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))
+        actionRegion= math.floor((action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))+1
+        if (action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim%(self.envparams.angleRange[1]-self.envparams.angleRange[0])==0:
+            actionRegion=actionRegion-1
         phiVec[actionRegion+self.envparams.stateFeatureDim-1]=1
-        gridDiag= math.floor((self.envparams.gridXLength**2+self.envparams.gridXLength**2)**0.5)
-        x=int(state[0])
-        y=int(state[1])
-        stateWidth = math.floor(gridDiag/self.envparams.stateFeatureDim)
-        stateRegion= math.floor(((x**2+y**2)**0.5)/stateWidth)
-        phiVec[stateRegion-1]=1
+#         gridDiag= math.floor((self.envparams.gridXLength**2+self.envparams.gridXLength**2)**0.5)
+#         x=int(state[0])
+#         y=int(state[1])
+#         stateWidth = math.floor(gridDiag/self.envparams.stateFeatureDim)
+#         stateRegion= math.floor(((x**2+y**2)**0.5)/stateWidth)
+        phiVec[self.spaceRegion(state)]=1
         return phiVec
         #returns a vector in self.weightVector Dim
-           
+    def spaceRegion(self,state): 
+        xRegionNumber=math.floor((state[0]-self.envparams.stateSpaceRange[0][0])/self.stateRegionXLength)+1
+        if state[0]==self.envparams.stateSpaceRange[0][1]:
+            xRegionNumber=xRegionNumber-1
+        yRegionNumber=math.floor((state[1]-self.envparams.stateSpaceRange[1][0])/self.stateRegionYLength)+1
+        if state[1]==self.envparams.stateSpaceRange[1][1]:
+            yRegionNumber=yRegionNumber-1
+        regionNumber=(yRegionNumber-1)*self.envparams.stateFeatureDimX+xRegionNumber
+        phiIndex=regionNumber-1
+        return phiIndex    
     
     def getQValue(self, state , action):
-        return np.dot(self.weightVector,self.phi(state,action))  
+        return np.dot(self.weightVector,self.phi(state,action)) 
     
+#     def actionRange(self,state): 
+#         wallIndicator=self.polyexp.isOnWall(state)
+#         if not wallIndicator:
+#             lower=self.envparams.angleRange[0]
+#             upper=self.envparams.angleRange[1]
+#         elif state[0]==self.envparams.stateSpaceRange[0][0]:
+#             if state[1]==self.envparams.stateSpaceRange[1][0]:
+#                 lower=0
+#                 upper=90
+#             elif state[1]==self.envparams.stateSpaceRange[1][1]:
+#                 lower=-90
+#                 upper=0
+#             else:
+#                 lower=-90
+#                 upper=90
+#         elif state[0]==self.envparams.stateSpaceRange[0][1]:
+#             if state[1]==self.envparams.stateSpaceRange[1][0]:
+#                 lower=90
+#                 upper=180
+#             elif state[1]==self.envparams.stateSpaceRange[1][1]:
+#                 lower=180
+#                 upper=270
+#             else:
+#                 lower=90
+#                 upper=270
+#         elif state[1]==self.envparams.stateSpaceRange[1][0]:
+#                 lower=0
+#                 upper=180
+#         elif state[1]==self.envparams.stateSpaceRange[1][1]:
+#                 lower=180
+#                 upper=360
+#         return [lower,upper]
     def sampleActionSet(self,state):
-        wallIndicator=self.polyexp.isOnWall(state)
-        if not wallIndicator:
-            lower=self.envparams.angleRange[0]
-            upper=self.envparams.angleRange[1]
-        elif state[0]==self.envparams.stateSpaceRange[0][0]:
-            if state[1]==self.envparams.stateSpaceRange[1][0]:
-                lower=0
-                upper=90
-            elif state[1]==self.envparams.stateSpaceRange[1][1]:
-                lower=-90
-                upper=0
-            else:
-                lower=-90
-                upper=90
-        elif state[0]==self.envparams.stateSpaceRange[0][1]:
-            if state[1]==self.envparams.stateSpaceRange[1][0]:
-                lower=90
-                upper=180
-            elif state[1]==self.envparams.stateSpaceRange[1][1]:
-                lower=180
-                upper=270
-            else:
-                lower=90
-                upper=270
-        elif state[1]==self.envparams.stateSpaceRange[1][0]:
-                lower=0
-                upper=180
-        elif state[1]==self.envparams.stateSpaceRange[1][1]:
-                lower=180
-                upper=360
-        step = math.floor((upper-lower)/self.actionSamplingDensity)
         sampledActionSet=[]
+#         for i in range(self.actionSamplingDensity):
+#             temp=random.choice(range(lower+(i)*step, lower+(i+1)*step))
+#             if temp in sampledActionSet:
+#                 i-=1
+#                 continue
+#             else:
+#                 sampledActionSet.append(temp)
         for i in range(self.actionSamplingDensity):
-            temp=random.choice(range(lower+(i)*step, lower+(i+1)*step))
-            if temp in sampledActionSet:
-                i-=1
-                continue
-            else:
-                sampledActionSet.append(temp)
+            sampledActionSet.append(self.envparams.angleRange[0]+(i+1)*((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.actionSamplingDensity))
+        
+        
         return sampledActionSet
         
     
     def getValue(self, state):
         sampledActionSet =self.sampleActionSet(state)
-        maxTemp= self.envparams.regularReward
+        maxTemp= self.getQValue(state, sampledActionSet[0])
+        actionSameQ=[]
+        actionSameQFlag=0
         for action in sampledActionSet:
+            s=self.getQValue(state, action)
             if self.getQValue(state, action)>maxTemp:
+                actionSameQFlag=0
                 maxTemp=self.getQValue(state, action)
+                actionSameQ=[]
+                actionSameQ.append(action)
+            elif self.getQValue(state, action)==maxTemp:
+                actionSameQ.append(action)
+                actionSameQFlag=1
             else:
                 continue
+        if actionSameQFlag==1 and self.getQValue(state, actionSameQ[0])>=maxTemp:
+            maxTemp=self.getQValue(state,random.choice(actionSameQ))
         return maxTemp
     
     def getPolicy(self, state):
@@ -118,10 +164,14 @@ class QLearner(object):
             else:
                 continue
         return action
+    
+    def goalZone(self):
+        goalRegion=random.randint(1,self.envparams.stateFeatureDim)
+        self.goalRegion=goalRegion
+        return goalRegion
+    
     def isInGoalZone(self,state):
-        radious= math.floor(((int(state[0])**2+int(state[1])**2)**0.5).real)
-        
-        if radious>=self.envparams.goalZoneRin and radious<=self.envparams.goalZoneRout:
+        if self.spaceRegion(state)+1==self.goalRegion:
             return True
         else:
             return False
@@ -129,20 +179,25 @@ class QLearner(object):
     def getReward(self, state):
         if self.isInGoalZone(state):
             return self.envparams.goalReward
+        elif self.polyexp.isOnWall(state):
+            return self.envparams.wallReward
         else:
             return self.envparams.regularReward
     def decision(self):
         self.exploitFlag=0
-        if random.uniform(0, 1)<=self.epsilon:
+        if random.uniform(0, 1)<self.epsilon:
             return 0 #Explore
         else:
             return 1  #Exploit
     
     def getAction(self,state):
-        
+        if self.polyexp.isOnWall(state):
+            print("Yes!")
         if self.decision()==0:
             #Exploration only
-            action= self.polyexp.theta_base
+            self.polyexp.directionFlag=1
+            action= self.polyexp.move(state)
+            self.polyexp.directionFlag=0
         else:
             self.exploitFlag=1
             action= self.getPolicy(state)
