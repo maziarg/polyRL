@@ -13,12 +13,12 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=30000
-    numberOfPureExploreMoves=20000
-    numberOfPureExploitMoves=5000
+    numberOfMoves=70000
+    numberOfPureExploreMoves=50000
+    numberOfPureExploitMoves=19590
     stepSize=1
     persistenceLength=150
-    learningRate=0.5
+    learningRate=0.9
      
     epsilon_init=1 
     epsilon=epsilon_init
@@ -75,6 +75,7 @@ if __name__ == '__main__':
             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
         elif i==numberOfMoves-numberOfPureExploitMoves:
             initPosition=polyexp.drawInitState()
+            polyexp.nextPosition=initPosition
             tempState=initPosition
             angle=polyexp.theta_0
             epsilon=0
@@ -82,7 +83,7 @@ if __name__ == '__main__':
             epsilon=0
         qAgent.setEpsilon(epsilon)
         print("epsilon="+str(epsilon))
-        action=qAgent.getAction(tempState)
+        action=qAgent.getAction(tempState) 
         print("action= "+str(action))
         print("goalRegion="+str(goalRegion))
 #         polyexp.setBaseTheta(action)

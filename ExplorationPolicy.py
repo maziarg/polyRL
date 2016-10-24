@@ -202,7 +202,7 @@ class polyExplorer(object):
             y_index = 1
         
         # On x Wall
-        if self.wallVisitFlag == 0:
+        if self.wallVisitFlag == 0 or self.exploit==1:
             if x_index == 1 and y_index == 0:
                 
                 if currentPosition[1] > nextPosition[1]:
@@ -290,7 +290,7 @@ class polyExplorer(object):
                         if currentPosition[1] == self.envparams.stateSpaceRange[1][1]:
                             nextPosition = [currentPosition[0], currentPosition[1] - self.stepSize - distanceTravelled]
                 self.wallVisitFlag=1
-        else:
+        elif self.exploit==0:
             nextPosition = self.deflectIn(currentPosition)
             self.wallVisitFlag = 0
         return nextPosition, currentPosition
@@ -627,4 +627,5 @@ class polyExplorer(object):
         self.numberOfMoves -= 1
         #self.numberOfSegment=self.segmentNum(currentPosition,nextPosition)
         return nextPosition
+
 

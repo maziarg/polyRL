@@ -20,13 +20,13 @@ class envParams(object):
         self.gridYscale=400
 #         self.gridXLength=500
 #         self.gridYLength=500
-        self.stateFeatureDimX=10
-        self.stateFeatureDimY=5
+        self.stateFeatureDimX=4
+        self.stateFeatureDimY=8
         self.stateFeatureDim=self.stateFeatureDimX*self.stateFeatureDimY
         self.actionFeatureDim=10
         self.goalReward=10
         self.regularReward=0
         self.wallReward=-1
         self.discountFactor=0.9
-        self.actionSTD=17
+        self.actionSTD=(self.angleRange[1]-self.angleRange[0])/(6*self.actionFeatureDim)
         

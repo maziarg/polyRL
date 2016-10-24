@@ -139,6 +139,7 @@ class QLearner(object):
         actionSameQ=[]
         actionSameQFlag=0
         for action in sampledActionSet:
+            s=self.getQValue(state, action)
             if self.getQValue(state, action)>maxTemp:
                 actionSameQFlag=0
                 maxTemp=self.getQValue(state, action)
@@ -178,8 +179,10 @@ class QLearner(object):
         actionRegion= math.floor((action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))+1
         if (action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim%(self.envparams.angleRange[1]-self.envparams.angleRange[0])==0:
             actionRegion=actionRegion-1
-        meanOfActionRegion=self.envparams.angleRange[0]+(2*actionRegion-1)*(self.envparams.angleRange[1]-self.envparams.angleRange[0])/(2*self.envparams.actionFeatureDim)
-        action=np.random.normal(meanOfActionRegion,self.envparams.actionSTD)
+        meanOfActionRegion=self.envparams.angleRange[0]+((2*actionRegion-1)*(self.envparams.angleRange[1]-self.envparams.angleRange[0])/(2*self.envparams.actionFeatureDim))
+        action=random.normalvariate(meanOfActionRegion,self.envparams.actionSTD)
+        while action>self.envparams.angleRange[0]+actionRegion*(self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim or action<=self.envparams.angleRange[0]+(actionRegion-1)*(self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim:
+            action=random.normalvariate(meanOfActionRegion,self.envparams.actionSTD)
         return action
     
     def goalZone(self):
@@ -211,6 +214,7 @@ class QLearner(object):
         if self.decision()==0:
             #Exploration only
             self.polyexp.directionFlag=1
+            self.polyexp.exploit=0
             action= self.polyexp.move(state)
             self.polyexp.directionFlag=0
         else:
@@ -218,6 +222,8 @@ class QLearner(object):
             self.polyexp.exploit=1
             action= self.getPolicy(state)
             self.polyexp.theta_base=action
+            self.polyexp.wallVisitFlag=0
+            self.polyexp.cornerIndex=0
         return action
     
     def update(self, state, action, nextState, reward):
