@@ -4,6 +4,7 @@ Created on Oct 17, 2016
 @author: Maziar Gomorkchi and Susan Amin
 '''
 import random
+import copy
 import numpy as np
 import math
 import random
@@ -21,7 +22,9 @@ class QLearner(object):
         #Should initialize the weight vector
         self.envparams = envParams()
         self.weightVectorDim=self.envparams.stateFeatureDim+self.envparams.actionFeatureDim
-        self.weightVector=np.zeros(self.weightVectorDim)
+        self.actionMatrix=np.zeros((self.envparams.stateFeatureDim,self.envparams.actionFeatureDim))
+        self.spaceVector=[0]*self.envparams.stateFeatureDim
+        self.weightVector=[]
         self.epsilon= epsilon
         self.stepSize=1
         self.persistenceLength=200
@@ -70,7 +73,7 @@ class QLearner(object):
         phiVec[self.spaceRegion(state)]=1
         return phiVec
         #returns a vector in self.weightVector Dim
-    def spaceRegion(self,state): 
+    def  spaceRegion(self,state): 
         xRegionNumber=math.floor((state[0]-self.envparams.stateSpaceRange[0][0])/self.stateRegionXLength)+1
         if state[0]==self.envparams.stateSpaceRange[0][1]:
             xRegionNumber=xRegionNumber-1
@@ -82,7 +85,7 @@ class QLearner(object):
         return phiIndex    
     
     def getQValue(self, state , action):
-        qValue=np.dot(self.weightVector,self.phi(state,action))
+        qValue=np.dot(self.setWeightVector(state, action),self.phi(state,action))
         return qValue
     
 #     def actionRange(self,state): 
@@ -226,9 +229,21 @@ class QLearner(object):
             self.polyexp.cornerIndex=0
         return action
     
+    def setWeightVector(self,state,action):
+        regionIndex=self.spaceRegion(state)
+        weightVector=copy.copy(self.spaceVector)
+        weightVector.extend(self.actionMatrix[regionIndex,])
+        self.weightVector=weightVector
+        return self.weightVector
+        
+    
     def update(self, state, action, nextState, reward):
         qError= reward + self.envparams.discountFactor*self.getValue(nextState)-self.getQValue(state, action)
-        self.weightVector=self.weightVector+ self.LearningRate*qError*self.phi(state,action)
+        self.weightVector=self.setWeightVector(state, action) + self.LearningRate*qError*self.phi(state,action)
+        for i in range(self.envparams.stateFeatureDim):
+            self.spaceVector[i]=self.weightVector[i]
+        for i in range(self.envparams.actionFeatureDim):
+            self.actionMatrix[self.spaceRegion(state)][i]=self.weightVector[self.envparams.stateFeatureDim+i]
         return self.weightVector
     
             

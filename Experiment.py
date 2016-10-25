@@ -13,12 +13,12 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=70000
-    numberOfPureExploreMoves=50000
-    numberOfPureExploitMoves=19590
+    numberOfMoves=60000
+    numberOfPureExploreMoves=30000
+    numberOfPureExploitMoves=15000
     stepSize=1
     persistenceLength=150
-    learningRate=0.9
+    learningRate=0.6
      
     epsilon_init=1 
     epsilon=epsilon_init
@@ -72,7 +72,8 @@ if __name__ == '__main__':
         if i<numberOfPureExploreMoves:
             qAgent.setEpsilon(epsilon_init)
         elif i<numberOfMoves-numberOfPureExploitMoves:
-            epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
+#             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
+            epsilon=0.7
         elif i==numberOfMoves-numberOfPureExploitMoves:
             initPosition=polyexp.drawInitState()
             polyexp.nextPosition=initPosition
