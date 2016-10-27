@@ -572,7 +572,7 @@ class polyExplorer(object):
         traveledDistanc = round(((nextPosition[1] - currentPosition[1]) ** 2 + (nextPosition[0] - currentPosition[0]) ** 2) ** (0.5), 2)
         traveledDistanc = traveledDistanc.real
         totalTravDist = traveledDistanc
-        while(totalTravDist < self.stepSize):
+        if(totalTravDist < self.stepSize):
             self.deflectFlag=1
             self.actionTemp=copy.copy(self.theta_base)
             if (currentPosition[0]==self.envparams.stateSpaceRange[0][0] or currentPosition[0]==self.envparams.stateSpaceRange[0][1]) and (currentPosition[1]==self.envparams.stateSpaceRange[1][0] or currentPosition[1]==self.envparams.stateSpaceRange[1][1]):

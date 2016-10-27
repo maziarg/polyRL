@@ -23,7 +23,7 @@ class envParams(object):
         self.stateFeatureDimX=10
         self.stateFeatureDimY=5
         self.stateFeatureDim=self.stateFeatureDimX*self.stateFeatureDimY
-        self.actionFeatureDim=4
+        self.actionFeatureDim=10
         self.goalReward=10
         self.regularReward=0
         self.wallReward=-1

@@ -58,19 +58,21 @@ class QLearner(object):
         self.epsilon=epsilon
         
     def phi(self, state, action) :
-        phiVec=np.zeros(self.envparams.stateFeatureDim+self.envparams.actionFeatureDim)
+#         phiVec=np.zeros(self.envparams.stateFeatureDim+self.envparams.actionFeatureDim)
+        phiVec=np.zeros(self.envparams.actionFeatureDim)
         #actionWidth=math.floor(((self.envparams.angleRange[1]-self.envparams.angleRange[0])/self.envparams.actionFeatureDim))
 #         actionRegion= math.floor(action*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))
         actionRegion= math.floor((action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim/(self.envparams.angleRange[1]-self.envparams.angleRange[0]))+1
         if (action-self.envparams.angleRange[0])*self.envparams.actionFeatureDim%(self.envparams.angleRange[1]-self.envparams.angleRange[0])==0:
             actionRegion=actionRegion-1
-        phiVec[actionRegion+self.envparams.stateFeatureDim-1]=1
+#         phiVec[actionRegion+self.envparams.stateFeatureDim-1]=1
+        phiVec[actionRegion-1]=1
 #         gridDiag= math.floor((self.envparams.gridXLength**2+self.envparams.gridXLength**2)**0.5)
 #         x=int(state[0])
 #         y=int(state[1])
 #         stateWidth = math.floor(gridDiag/self.envparams.stateFeatureDim)
 #         stateRegion= math.floor(((x**2+y**2)**0.5)/stateWidth)
-        phiVec[self.spaceRegion(state)]=1
+#         phiVec[self.spaceRegion(state)]=1
         return phiVec
         #returns a vector in self.weightVector Dim
     def  spaceRegion(self,state): 
@@ -231,8 +233,9 @@ class QLearner(object):
     
     def setWeightVector(self,state,action):
         regionIndex=self.spaceRegion(state)
-        weightVector=copy.copy(self.spaceVector)
-        weightVector.extend(self.actionMatrix[regionIndex,])
+#         weightVector=copy.copy(self.spaceVector)
+#         weightVector.extend(self.actionMatrix[regionIndex,])
+        weightVector=copy.copy(self.actionMatrix[regionIndex,])
         self.weightVector=weightVector
         return self.weightVector
         
@@ -240,10 +243,12 @@ class QLearner(object):
     def update(self, state, action, nextState, reward):
         qError= reward + self.envparams.discountFactor*self.getValue(nextState)-self.getQValue(state, action)
         self.weightVector=self.setWeightVector(state, action) + self.LearningRate*qError*self.phi(state,action)
-        for i in range(self.envparams.stateFeatureDim):
-            self.spaceVector[i]=self.weightVector[i]
+#         for i in range(self.envparams.stateFeatureDim):
+#             self.spaceVector[i]=self.weightVector[i]
+#         for i in range(self.envparams.actionFeatureDim):
+#             self.actionMatrix[self.spaceRegion(state)][i]=self.weightVector[self.envparams.stateFeatureDim+i]
         for i in range(self.envparams.actionFeatureDim):
-            self.actionMatrix[self.spaceRegion(state)][i]=self.weightVector[self.envparams.stateFeatureDim+i]
+            self.actionMatrix[self.spaceRegion(state)][i]=self.weightVector[i]
         return self.weightVector
     
             

@@ -14,11 +14,11 @@ if __name__ == '__main__':
     
     
     numberOfMoves=40000
-    numberOfPureExploreMoves=20000
+    numberOfPureExploreMoves=30000
     numberOfPureExploitMoves=10000
     stepSize=1
     persistenceLength=150
-    learningRate=0.8
+    learningRate=0.2
      
     epsilon_init=1 
     epsilon=epsilon_init
