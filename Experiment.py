@@ -13,12 +13,12 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=60000
-    numberOfPureExploreMoves=30000
-    numberOfPureExploitMoves=15000
+    numberOfMoves=40000
+    numberOfPureExploreMoves=20000
+    numberOfPureExploitMoves=10000
     stepSize=1
     persistenceLength=150
-    learningRate=0.6
+    learningRate=0.8
      
     epsilon_init=1 
     epsilon=epsilon_init
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             qAgent.setEpsilon(epsilon_init)
         elif i<numberOfMoves-numberOfPureExploitMoves:
 #             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
-            epsilon=0.7
+            epsilon=0.9
         elif i==numberOfMoves-numberOfPureExploitMoves:
             initPosition=polyexp.drawInitState()
             polyexp.nextPosition=initPosition
@@ -92,8 +92,12 @@ if __name__ == '__main__':
         print("move #"+str(i)+ " = "+str(oldState))
         tempState=polyexp.move(oldState)
         newState=tempState
+        if polyexp.deflectFlag==1:
+            action=polyexp.actionTemp
+            polyexp.deflectFlag=0
         reward=qAgent.getReward(newState)
-        weightVec=qAgent.update(oldState, action, newState, reward)
+        if epsilon!=0:
+            weightVec=qAgent.update(oldState, action, newState, reward)
         if i>numberOfMoves-numberOfPureExploitMoves:
             exploitReward+=reward
             if reward==polyexp.envparams.goalReward:
@@ -141,5 +145,6 @@ if __name__ == '__main__':
     win2.postscript(file="Exploit.eps",colormode='color')
     #print("theta:",str(polyexp.theta))
     #print("Number of segments in each square:",str(polyexp.numberOfSegment))
-    print("weight vector: "+ str(weightVec))
+    print("space vector: "+ str(qAgent.spaceVector))
+    print("action matrix: "+str(qAgent.actionMatrix))
     

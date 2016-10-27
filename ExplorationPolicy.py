@@ -3,6 +3,7 @@ Created on Sep 7, 2016
 @author: mgomrokchi
 '''
 from envParams import envParams
+import copy
 from qLearner import QLearner
 import numpy as np
 import math
@@ -44,6 +45,8 @@ class polyExplorer(object):
         [self.xDivisionSize, self.yDivisionSize]=self.setDivisionSize()
         self.directionFlag=0
         self.exploit=0
+        self.actionTemp=0
+        self.deflectFlag=0
           
     def setBaseTheta(self, theta_base):
         self.theta_base = theta_base
@@ -570,6 +573,8 @@ class polyExplorer(object):
         traveledDistanc = traveledDistanc.real
         totalTravDist = traveledDistanc
         while(totalTravDist < self.stepSize):
+            self.deflectFlag=1
+            self.actionTemp=copy.copy(self.theta_base)
             if (currentPosition[0]==self.envparams.stateSpaceRange[0][0] or currentPosition[0]==self.envparams.stateSpaceRange[0][1]) and (currentPosition[1]==self.envparams.stateSpaceRange[1][0] or currentPosition[1]==self.envparams.stateSpaceRange[1][1]):
                 #self.wallVisitFlag = 1
                 nextPosition= [self.corner(currentPosition)[0], self.corner(currentPosition)[1]]
