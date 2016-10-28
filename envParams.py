@@ -18,10 +18,11 @@ class envParams(object):
         self.initThetaDist = "uniform"   
         self.gridXscale=400
         self.gridYscale=400
+        self.goalPoint=[[125,5],[285,85]]
 #         self.gridXLength=500
 #         self.gridYLength=500
         self.stateFeatureDimX=10
-        self.stateFeatureDimY=5
+        self.stateFeatureDimY=10
         self.stateFeatureDim=self.stateFeatureDimX*self.stateFeatureDimY
         self.actionFeatureDim=10
         self.goalReward=10
@@ -29,4 +30,5 @@ class envParams(object):
         self.wallReward=-1
         self.discountFactor=0.9
         self.actionSTD=(self.angleRange[1]-self.angleRange[0])/(6*self.actionFeatureDim)
+#         self.actionSTD=0
         

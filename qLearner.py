@@ -196,7 +196,8 @@ class QLearner(object):
         return goalRegion
     
     def isInGoalZone(self,state):
-        if self.spaceRegion(state)+1==self.goalRegion:
+        if state[0]>=self.envparams.goalPoint[0][0] and state[0]<=self.envparams.goalPoint[1][0] and state[1]>=self.envparams.goalPoint[0][1] and state[1]<=self.envparams.goalPoint[1][1]:
+#         if self.spaceRegion(state)+1==self.goalRegion:
             return True
         else:
             return False

@@ -13,14 +13,15 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=80000
-    numberOfPureExploreMoves=60000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
+    numberOfMoves=150000
+    numberOfPureExploreMoves=100000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
     numberOfPureExploitMoves=20000
     numberOfTestEvents=50
     stepSize=1
     persistenceLength=150
-    learningRate=0.1
-    epsilonGreedy=0.4
+    learningRate=0.3
+    epsilonGreedy=0.3
+    epsilonIncrement=0.1
      
     epsilon_init=1 
     epsilon=epsilon_init
@@ -53,7 +54,8 @@ if __name__ == '__main__':
     cir3.draw(win1)
     cir4 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), 5)
     cir4.draw(win1)
-    goalPoint=qAgent.goalBorders()
+#     goalPoint=qAgent.goalBorders()
+    goalPoint=[Point(polyexp.envparams.goalPoint[0][0],polyexp.envparams.goalPoint[0][1]),Point(polyexp.envparams.goalPoint[1][0],polyexp.envparams.goalPoint[1][1])]
     rect = Rectangle(goalPoint[0],goalPoint[1])
 #     rect.setOutline('red')
     rect.setFill('aquamarine')
@@ -66,18 +68,21 @@ if __name__ == '__main__':
 #     cirG = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[0][1]), polyexp.envparams.goalZoneRout)
 #     cirG.setOutline('red')
 #     cirG.draw(win1)
-    
+    k=0
     for i in range(numberOfMoves):
         if i<numberOfPureExploreMoves:
             qAgent.setEpsilon(epsilon_init)
         else:
 #             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
-            epsilon=epsilonGreedy
+#             epsilon=epsilonGreedy
+            if (i-numberOfPureExploreMoves)==k*(numberOfMoves-numberOfPureExploreMoves)/10:
+                k+=1
+                epsilon=epsilon_init-k*epsilonIncrement
         qAgent.setEpsilon(epsilon)
         print("epsilon="+str(epsilon))
         action=qAgent.getAction(tempState) 
         print("action= "+str(action))
-        print("goalRegion="+str(goalRegion))
+#         print("goalRegion="+str(goalRegion))
 #         polyexp.setBaseTheta(action)
         oldState=tempState
         print("move #"+str(i)+ " = "+str(oldState))
@@ -123,7 +128,8 @@ if __name__ == '__main__':
         cir3.draw(win2)
         cir4 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), 5)
         cir4.draw(win2)
-        goalPoint=qAgent.goalBorders()
+        goalPoint=[Point(polyexp.envparams.goalPoint[0][0],polyexp.envparams.goalPoint[0][1]),Point(polyexp.envparams.goalPoint[1][0],polyexp.envparams.goalPoint[1][1])]
+#         goalPoint=qAgent.goalBorders()
         rect = Rectangle(goalPoint[0],goalPoint[1])
     #     rect.setOutline('red')
         rect.setFill('aquamarine')
