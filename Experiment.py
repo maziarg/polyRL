@@ -13,13 +13,13 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=150000
+    numberOfMoves=100000
     numberOfPureExploreMoves=100000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
     numberOfPureExploitMoves=20000
     numberOfTestEvents=50
     stepSize=1
     persistenceLength=150
-    learningRate=0.3
+    learningRate=0.2
     epsilonGreedy=0.3
     epsilonIncrement=0.1
      
