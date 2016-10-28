@@ -13,12 +13,14 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=40000
-    numberOfPureExploreMoves=30000
-    numberOfPureExploitMoves=10000
+    numberOfMoves=80000
+    numberOfPureExploreMoves=60000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
+    numberOfPureExploitMoves=20000
+    numberOfTestEvents=50
     stepSize=1
     persistenceLength=150
-    learningRate=0.2
+    learningRate=0.1
+    epsilonGreedy=0.4
      
     epsilon_init=1 
     epsilon=epsilon_init
@@ -33,8 +35,6 @@ if __name__ == '__main__':
     tempState=initPosition
     angle=polyexp.theta_0
     goalRegion=qAgent.goalZone()
-    exploitReward=0
-    numberOfExploitExperiment=100
     #positionArray=zeros((numberOfMoves,2))
     win1 = GraphWin("GRID",  polyexp.envparams.stateSpaceRange[0][1]+10-polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]+10-polyexp.envparams.stateSpaceRange[1][0])
     line1 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]))
@@ -58,7 +58,6 @@ if __name__ == '__main__':
 #     rect.setOutline('red')
     rect.setFill('aquamarine')
     rect.draw(win1)
-    k=0
     #line = Line(Point(polyexp.envparams.goalZone[0][0],polyexp.envparams.goalZone[1][0]), Point(polyexp.envparams.goalZone[0][1],polyexp.envparams.goalZone[1][1]))
     #line.draw(win1)
 #     cirG = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[0][1]), polyexp.envparams.goalZoneRin)
@@ -71,17 +70,9 @@ if __name__ == '__main__':
     for i in range(numberOfMoves):
         if i<numberOfPureExploreMoves:
             qAgent.setEpsilon(epsilon_init)
-        elif i<numberOfMoves-numberOfPureExploitMoves:
-#             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
-            epsilon=0.9
-        elif i==numberOfMoves-numberOfPureExploitMoves:
-            initPosition=polyexp.drawInitState()
-            polyexp.nextPosition=initPosition
-            tempState=initPosition
-            angle=polyexp.theta_0
-            epsilon=0
         else:
-            epsilon=0
+#             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
+            epsilon=epsilonGreedy
         qAgent.setEpsilon(epsilon)
         print("epsilon="+str(epsilon))
         action=qAgent.getAction(tempState) 
@@ -96,55 +87,80 @@ if __name__ == '__main__':
             action=polyexp.actionTemp
             polyexp.deflectFlag=0
         reward=qAgent.getReward(newState)
-        if epsilon!=0:
-            weightVec=qAgent.update(oldState, action, newState, reward)
-        if i>numberOfMoves-numberOfPureExploitMoves:
-            exploitReward+=reward
-            if reward==polyexp.envparams.goalReward:
-                print("Accumulative Reward="+str(exploitReward))
-                break
-            if i==numberOfMoves-1:
-                print("Didn't reach goal")
-        if i!=numberOfMoves-numberOfPureExploitMoves:
-            line = Line(Point(oldState[0],oldState[1]), Point(newState[0],newState[1]))
-            if qAgent.exploitFlag==1:
-                line.setOutline('red')
-            line.draw(win1)
-        if i>numberOfMoves-numberOfPureExploitMoves:
-            if k==0:
-                win2 = GraphWin("GRID",  polyexp.envparams.stateSpaceRange[0][1]+10-polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]+10-polyexp.envparams.stateSpaceRange[1][0])
-                line1 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]))
-                line1.draw(win2)
-                line2 = Line(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]))
-                line2.draw(win2)
-                line3 = Line(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]))
-                line3.draw(win2)
-                line4 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]), Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]))
-                line4.draw(win2)
-                cir1 = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), 5)
-                cir1.draw(win2)
-                cir2 = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]), 5)
-                cir2.draw(win2)
-                cir3 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]), 5)
-                cir3.draw(win2)
-                cir4 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), 5)
-                cir4.draw(win2)
-                goalPoint=qAgent.goalBorders()
-                rect = Rectangle(goalPoint[0],goalPoint[1])
-            #     rect.setOutline('red')
-                rect.setFill('aquamarine')
-                rect.draw(win2)
-                k=1
-            line = Line(Point(oldState[0],oldState[1]), Point(newState[0],newState[1]))
+        weightVec=qAgent.update(oldState, action, newState, reward)
+        line = Line(Point(oldState[0],oldState[1]), Point(newState[0],newState[1]))
+        if qAgent.exploitFlag==1:
             line.setOutline('red')
-            line.draw(win2)
+        line.draw(win1)
         #sety(tempState)
         #goto(oldState,newState)
     # saves the current TKinter object in postscript format
     win1.postscript(file="image.eps", colormode='color')
-    win2.postscript(file="Exploit.eps",colormode='color')
+    epsilon=0
+    qAgent.setEpsilon(epsilon)
+    totalReward=0
+    numberOfSuccessfulEvents=0
+    for i in range(numberOfTestEvents):
+        initPosition=polyexp.drawInitState()
+        polyexp.nextPosition=initPosition
+        tempState=initPosition
+        angle=polyexp.theta_0
+        exploitReward=0
+        win2 = GraphWin("GRID",  polyexp.envparams.stateSpaceRange[0][1]+10-polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]+10-polyexp.envparams.stateSpaceRange[1][0])
+        line1 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]))
+        line1.draw(win2)
+        line2 = Line(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]))
+        line2.draw(win2)
+        line3 = Line(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]))
+        line3.draw(win2)
+        line4 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]), Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]))
+        line4.draw(win2)
+        cir1 = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), 5)
+        cir1.draw(win2)
+        cir2 = Circle(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]), 5)
+        cir2.draw(win2)
+        cir3 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]), 5)
+        cir3.draw(win2)
+        cir4 = Circle(Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][1]), 5)
+        cir4.draw(win2)
+        goalPoint=qAgent.goalBorders()
+        rect = Rectangle(goalPoint[0],goalPoint[1])
+    #     rect.setOutline('red')
+        rect.setFill('aquamarine')
+        rect.draw(win2)
+        for j in range(numberOfPureExploitMoves):
+            action=qAgent.getAction(tempState) 
+            print("action= "+str(action))
+#             print("goalRegion="+str(goalRegion))
+            print("test# "+str(i+1))
+            oldState=tempState
+            print("move #"+str(j)+ " = "+str(oldState))
+            tempState=polyexp.move(oldState)
+            newState=tempState
+            if polyexp.deflectFlag==1:
+                action=polyexp.actionTemp
+                polyexp.deflectFlag=0
+            reward=qAgent.getReward(newState)
+            line = Line(Point(oldState[0],oldState[1]), Point(newState[0],newState[1]))
+            line.setOutline('red')
+            line.draw(win2)
+            exploitReward+=reward
+            if reward==polyexp.envparams.goalReward:
+                print("Accumulative Reward="+str(exploitReward))
+                numberOfSuccessfulEvents+=1
+                break
+            if j==numberOfPureExploitMoves-1:
+                print("Accumulative Reward="+str(exploitReward))
+                print("Didn't reach goal")
+        totalReward=totalReward+exploitReward
+        win2.getMouse() # pause for click in window
+#         input("Press Enter to continue...")
+        win2.postscript(file="Exploit.eps",colormode='color')
+        win2.close()
+    averageReward=totalReward/numberOfTestEvents
     #print("theta:",str(polyexp.theta))
     #print("Number of segments in each square:",str(polyexp.numberOfSegment))
-    print("space vector: "+ str(qAgent.spaceVector))
     print("action matrix: "+str(qAgent.actionMatrix))
+    print("average reward over "+str(numberOfTestEvents)+" tests= "+str(averageReward))
+    print("number of successful events in "+str(numberOfTestEvents)+" experiments= "+str(numberOfSuccessfulEvents)+" ("+str(numberOfSuccessfulEvents/numberOfTestEvents*100)+"%)")
     
