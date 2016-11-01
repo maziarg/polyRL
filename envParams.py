@@ -22,7 +22,7 @@ class envParams(object):
 #         self.gridXLength=500
 #         self.gridYLength=500
         self.stateFeatureDimX=10
-        self.stateFeatureDimY=10
+        self.stateFeatureDimY=5
         self.stateFeatureDim=self.stateFeatureDimX*self.stateFeatureDimY
         self.actionFeatureDim=10
         self.goalReward=10

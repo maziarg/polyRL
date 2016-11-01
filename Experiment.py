@@ -13,9 +13,9 @@ import numpy as np
 if __name__ == '__main__':
     
     
-    numberOfMoves=100000
-    numberOfPureExploreMoves=100000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
-    numberOfPureExploitMoves=20000
+    numberOfMoves=60000
+    numberOfPureExploreMoves=60000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
+    numberOfPureExploitMoves=25000
     numberOfTestEvents=50
     stepSize=1
     persistenceLength=150
@@ -153,14 +153,16 @@ if __name__ == '__main__':
             exploitReward+=reward
             if reward==polyexp.envparams.goalReward:
                 print("Accumulative Reward="+str(exploitReward))
+                print("Reached goal!")
                 numberOfSuccessfulEvents+=1
                 break
             if j==numberOfPureExploitMoves-1:
                 print("Accumulative Reward="+str(exploitReward))
-                print("Didn't reach goal")
+                print("Didn't reach goal!")
         totalReward=totalReward+exploitReward
+        print("Click on the graph window to continue...")
         win2.getMouse() # pause for click in window
-#         input("Press Enter to continue...")
+#         input("Click on graph window to continue...")
         win2.postscript(file="Exploit.eps",colormode='color')
         win2.close()
     averageReward=totalReward/numberOfTestEvents
