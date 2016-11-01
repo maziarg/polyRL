@@ -9,8 +9,14 @@ from builtins import range
 from numpy import *
 from qLearner import QLearner
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 if __name__ == '__main__':
+    a = np.random.random((16, 16))
+    plt.imshow(a, cmap='hot', interpolation='nearest')
+    plt.show()
+    
     
     
     numberOfMoves=60000
