@@ -18,7 +18,7 @@ class envParams(object):
         self.initThetaDist = "uniform"   
         self.gridXscale=400
         self.gridYscale=400
-        self.goalPoint=[[125,5],[285,85]]
+        self.goalPoint=[[165,5],[205,85]]
 #         self.gridXLength=500
 #         self.gridYLength=500
         self.stateFeatureDimX=10

@@ -9,29 +9,28 @@ from builtins import range
 from numpy import *
 from qLearner import QLearner
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 if __name__ == '__main__':
-    a = np.random.random((16, 16))
-    plt.imshow(a, cmap='hot', interpolation='nearest')
-    plt.show()
     
     
-    
-    numberOfMoves=60000
-    numberOfPureExploreMoves=60000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
-    numberOfPureExploitMoves=25000
+    numberOfMoves=400000
+    numberOfPureExploreMoves=200000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
+    numberOfPureExploitMoves=20000
     numberOfTestEvents=50
     stepSize=1
-    persistenceLength=150
-    learningRate=0.2
-    epsilonGreedy=0.3
+    persistenceLength=200
+    learningRate=0.1
+    epsilonGreedy1=0.8  #Set it to a value in the range [0.7,1)
+    epsilonGreedy2=0.5  #Set it to a value in the range [0.4,0.7)
+    epsilonGreedy3=0.2  #Set it to a value in the range [0,0.4)
+    epsilonGreedy=0.5                                                                               
     epsilonIncrement=0.1
+    randomWalkFlagExploit=1
      
     epsilon_init=1 
     epsilon=epsilon_init
     polyexp= polyExplorer(numberOfMoves, stepSize, persistenceLength)
+    polyexp.setRandomWalkFlag(0)
     actionSamplingDensity=polyexp.envparams.actionFeatureDim
     #myTurtle= turtle()
     #anchorpoint= Point(polyexp.envparams.stateSpaceRange[0][1]/2,polyexp.envparams.stateSpaceRange[1][1]/2)
@@ -42,6 +41,7 @@ if __name__ == '__main__':
     tempState=initPosition
     angle=polyexp.theta_0
     goalRegion=qAgent.goalZone()
+    
     #positionArray=zeros((numberOfMoves,2))
     win1 = GraphWin("GRID",  polyexp.envparams.stateSpaceRange[0][1]+10-polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][1]+10-polyexp.envparams.stateSpaceRange[1][0])
     line1 = Line(Point(polyexp.envparams.stateSpaceRange[0][0],polyexp.envparams.stateSpaceRange[1][0]), Point(polyexp.envparams.stateSpaceRange[0][1],polyexp.envparams.stateSpaceRange[1][0]))
@@ -75,15 +75,33 @@ if __name__ == '__main__':
 #     cirG.setOutline('red')
 #     cirG.draw(win1)
     k=0
+    n=0
     for i in range(numberOfMoves):
+        if qAgent.isInGoalZone(tempState):
+            initPosition=polyexp.drawInitState()
+            tempState=initPosition
+            angle=polyexp.theta_0
+            if i>=numberOfPureExploreMoves:
+                n+=1
+            continue
         if i<numberOfPureExploreMoves:
             qAgent.setEpsilon(epsilon_init)
         else:
-#             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
-#             epsilon=epsilonGreedy
-            if (i-numberOfPureExploreMoves)==k*(numberOfMoves-numberOfPureExploreMoves)/10:
-                k+=1
-                epsilon=epsilon_init-k*epsilonIncrement
+            if i==numberOfPureExploreMoves:
+                win1.getMouse()
+                win1.postscript(file="imagePureExplore.eps", colormode='color')
+#             if i<numberOfPureExploreMoves+(numberOfMoves-numberOfPureExploreMoves)/3:
+# #             epsilon=(epsilon_init/(numberOfPureExploreMoves-(numberOfMoves-numberOfPureExploitMoves)))*(i-(numberOfMoves-numberOfPureExploitMoves))
+#                 epsilon=epsilonGreedy1
+#             elif i<numberOfPureExploreMoves+2*(numberOfMoves-numberOfPureExploreMoves)/3:
+#                 epsilon=epsilonGreedy2
+#             else:
+#                 epsilon=epsilonGreedy3
+            epsilon=epsilonGreedy
+            polyexp.setRandomWalkFlag(randomWalkFlagExploit)
+#             if (i-numberOfPureExploreMoves)==k*(numberOfMoves-numberOfPureExploreMoves)/10:
+#                 k+=1
+#                 epsilon=epsilon_init-k*epsilonIncrement
         qAgent.setEpsilon(epsilon)
         print("epsilon="+str(epsilon))
         action=qAgent.getAction(tempState) 
@@ -103,8 +121,9 @@ if __name__ == '__main__':
         if qAgent.exploitFlag==1:
             line.setOutline('red')
         line.draw(win1)
-        #sety(tempState)
-        #goto(oldState,newState)
+        
+            #sety(tempState)
+            #goto(oldState,newState)
     # saves the current TKinter object in postscript format
     win1.postscript(file="image.eps", colormode='color')
     epsilon=0
@@ -177,4 +196,5 @@ if __name__ == '__main__':
     print("action matrix: "+str(qAgent.actionMatrix))
     print("average reward over "+str(numberOfTestEvents)+" tests= "+str(averageReward))
     print("number of successful events in "+str(numberOfTestEvents)+" experiments= "+str(numberOfSuccessfulEvents)+" ("+str(numberOfSuccessfulEvents/numberOfTestEvents*100)+"%)")
+    print("Times epsilon greedy reached goal:"+str(n))
     

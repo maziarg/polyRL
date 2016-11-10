@@ -47,7 +47,9 @@ class polyExplorer(object):
         self.exploit=0
         self.actionTemp=0
         self.deflectFlag=0
-          
+    def setRandomWalkFlag(self,flagVal=0):
+        self.randomWalkFlag=flagVal
+         
     def setBaseTheta(self, theta_base):
         self.theta_base = theta_base
 
