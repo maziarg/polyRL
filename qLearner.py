@@ -5,7 +5,7 @@ Created on Oct 17, 2016
 '''
 import random
 import copy
-import numpy
+import numpy as np 
 import math
 import random
 from graphics import *
