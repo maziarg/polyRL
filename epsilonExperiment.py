@@ -6,25 +6,25 @@ Created on Nov 14, 2016
 from ExplorationPolicy import polyExplorer 
 import statistics
 import math
-from cycler import cycler
-from graphics import *
 from builtins import range
 import numpy as np
 from qLearner import QLearner
-import matplotlib.pyplot as plt
+import time
+from datetime import date
+# import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    numIterations=10
+    numIterations=2
     numberOfMoves=200000
     numberOfPureExploreMoves=100000 #numberOfEpsilonGreedy would be "numberOfMoves-numberOfPureExploreMoves".
     numberOfPureExploitMoves=20000
     numberOfTestEvents=20
 #     numberOfRoundsExperiments=10
     stepSize=1
-    persistenceLengthList=[10,200,700]
+    persistenceLengthList=[200]
     randomWalkFlagExploit=0
-    epsilonList=[0.1,0.4,0.7]
-    learningRateList= [0.1,0.3,0.5]
+    epsilonList=[0.1]
+    learningRateList= [0.1]
     epsilon_init=1
 #     k=0
 #     n=0
@@ -120,143 +120,42 @@ if __name__ == '__main__':
             prsistanatTempResult.append(tempResult)
         expResults.append(prsistanatTempResult)
     
-    #for i in range(len(learningRateList)):
-    #    for j in range(len(epsilonList)):
-    plt.figure()
-#     ax = plt.gca()
-#     plt.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
-    plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'y']) +cycler('linestyle', ['-', '--', ':', '-.'])))
-            
-    avgReward=[]
-    std=[]
-    #Plot average reward as a function of learning rate for a certain persistence length 
-    for k in range(len(epsilonList)):
-        for j in range(len(learningRateList)):
-            avgReward.append(expResults[1][j][k][0])
-            std.append(expResults[1][j][k][1])
-        print(avgReward)
-        print(std)
-        plt.errorbar(learningRateList, avgReward, yerr=std, fmt='o')   
-        avgReward=[]
-        std=[]
-            
     
-    print(expResults)
+    finalResult=open('Final Result','w')
+    finalResult.write(str(expResults))
     
-#     ax.errorbar(learningRateList, avgReward, yerr=std, fmt='o')
+    information=open('information','w')
+    information.write('Date: '+str(date.today())+'\n\n\n')
+    if polyexp.randomWalkFlag==0:
+        information.write('Pure Explore: Persistence Length\n')
+    else:
+        information.write('Pure Explore: Random Walk\n')
+    if randomWalkFlagExploit==0:
+        information.write('Epsilon Greedy Explore: Persistence Length\n')
+    else:
+        information.write('Epsilon Greedy Explore: Random Walk\n')
+    information.write('Region Corner Coordinates: '+str(polyexp.envparams.goalPoint)+'\n\n\n')
     
-    plt.xlim(0,1)
-    plt.ylim(-100,100)
-    plt.ylabel('Average Reward')
-    plt.xlabel('Learning Rate')
-    plt.legend(["epsilon=0.1","epsilon=0.4", "epsilon=0.7" ],loc=0)
-    plt.title("Average Reward for P=200")
-    plt.savefig('1.png')
+    information.write('#Pure Explore: '+str(numberOfPureExploreMoves)+'\n')
+    information.write('#Epsilon Greedy: '+str(numberOfMoves-numberOfPureExploreMoves)+'\n')
+    information.write('#Pure Exploit: '+str(numberOfPureExploitMoves)+'\n')
     
-    plt.figure()
-#     ax1 = plt.gca()
-#     plt.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
-    plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'y']) +cycler('linestyle', ['-', '--', ':', '-.'])))
-    avgSuccessRatio=[]
-    std=[]
-    for k in range(len(epsilonList)):
-        for j in range(len(learningRateList)):
-            avgSuccessRatio.append(expResults[1][j][k][2])
-            std.append(expResults[1][j][k][3])
-        print(avgSuccessRatio)
-        print(std)
-        plt.errorbar(learningRateList, avgSuccessRatio, yerr=std, fmt='o')   
-        avgSuccessRatio=[]
-        std=[]
-            
-    
-    print(expResults)
-    
-#     ax.errorbar(learningRateList, avgReward, yerr=std, fmt='o')
-    
-    plt.xlim(0,1)
-    plt.ylim(-0.5,1)
-    plt.ylabel('Ratio of Successful Events')
-    plt.xlabel('Learning Rate')
-    plt.legend(["epsilon=0.1","epsilon=0.4", "epsilon=0.7" ],loc=0)
-    plt.title("Ratio of Successful Events for P=200")
-    plt.savefig('2.png')
-    
-    plt.figure()
-#     ax2 = plt.gca()
-#     plt.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
-    plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'y']) +cycler('linestyle', ['-', '--', ':', '-.'])))
-            
-    avgReward=[]
-    std=[]
-    #Plot average reward as a function of learning rate for a certain persistence length 
-    for j in range(len(learningRateList)):
-        for i in range(len(persistenceLengthList)):
-            avgReward.append(expResults[i][j][0][0])
-            std.append(expResults[i][j][0][1])
-        print(avgReward)
-        print(std)
-        plt.errorbar(persistenceLengthList, avgReward, yerr=std, fmt='o')   
-        avgReward=[]
-        std=[]
-            
-    
-    print(expResults)
-    
-#     ax.errorbar(learningRateList, avgReward, yerr=std, fmt='o')
-    
-    plt.xlim(0,1000)
-    plt.ylim(-100,100)
-    plt.ylabel('Average Reward')
-    plt.xlabel('Persistence Length')
-    plt.legend(["alpha=0.05","alpha=0.1", "alpha=0.2", "alpha=0.3", "alpha=0.4", "alpha=0.5"  ],loc=0)
-    plt.title("Average Reward for epsilon=0.1")
-    plt.savefig('3.png')
-    
-    plt.figure()
-#     ax3 = plt.gca()
-#     plt.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
-    plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'y']) +cycler('linestyle', ['-', '--', ':', '-.'])))
-    avgSuccessRatio=[]
-    std=[]
-    for j in range(len(learningRateList)):
-        for i in range(len(persistenceLengthList)):
-            avgSuccessRatio.append(expResults[i][j][0][2])
-            std.append(expResults[i][j][0][3])
-        print(avgSuccessRatio)
-        print(std)
-        plt.errorbar(persistenceLengthList, avgSuccessRatio, yerr=std, fmt='o')   
-        avgSuccessRatio=[]
-        std=[]
-            
-    
-    print(expResults)
-    
-#     ax.errorbar(learningRateList, avgReward, yerr=std, fmt='o')
-    
-    plt.xlim(0,1000)
-    plt.ylim(-0.5,1)
-    plt.ylabel('Ratio of Successful Events')
-    plt.xlabel('Persistence Length')
-    plt.legend(["alpha=0.05","alpha=0.1", "alpha=0.2", "alpha=0.3", "alpha=0.4", "alpha=0.5"  ],loc=0)
-    plt.title("Ratio of Successful Events for epsilon=0.1")
-    plt.savefig('4.png')
-    plt.show()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-#     mean_V_vs_LSW[j]=abs(numpy.average(temptemp))
-#     std_V_vs_LSW[j] = numpy.std(temptemp)
-#     V_vs_LSW_bldu[j] = math.log10(abs(mean_V_vs_LSW[j]+std_V_vs_LSW[j]))-math.log10(abs(mean_V_vs_LSW[j]))
-#     V_vs_LSW_bldl[j] = -math.log10(abs(mean_V_vs_LSW[j]-std_V_vs_LSW[j]))+math.log10(abs(mean_V_vs_LSW[j]))
-#     V_vs_LSW_blm[j] = math.log10(abs(mean_V_vs_LSW[j]))
+    if polyexp.randomWalkFlag==0 or randomWalkFlagExploit==0:
+        information.write('Persistence Length: '+str(persistenceLengthList)+'\n')
+    else:
+        information.write('Persistence Length: N/A\n')
+    information.write('Learning Rate: '+str(learningRateList)+'\n')
+    information.write('Epsilon: '+str(epsilonList)+'\n')
+    information.write('Discount Factor: '+str(polyexp.envparams.discountFactor)+'\n')
+    information.write('Theta STD: '+str(polyexp.STD)+'\n')
+    information.write('#Space Regions: '+str(polyexp.envparams.stateFeatureDim)+' (X: '+str(polyexp.envparams.stateFeatureDimX)+', Y: '+str(polyexp.envparams.stateFeatureDimY)+')\n')
+    information.write('Environment Corner Coordinates: '+str(polyexp.envparams.stateSpaceRange)+'\n')
+    information.write('Angle Range: '+str(polyexp.envparams.angleRange)+'\n')
+    information.write('#Action Regions: '+str(polyexp.envparams.actionFeatureDim)+'\n')
+    information.write('Action STD: '+str(polyexp.envparams.actionSTD)+'\n\n\n')
+    information.write('Regular Reward: '+str(polyexp.envparams.regularReward)+'\n')
+    information.write('Wall Reward: '+str(polyexp.envparams.wallReward)+'\n')
+    information.write('Goal Reward: '+str(polyexp.envparams.goalReward)+'\n')
+    information.write('#Test Events: '+str(numberOfTestEvents)+'\n')
+    information.write('#Iterations on Whole Experiment: '+str(numIterations))
     

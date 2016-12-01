@@ -8,7 +8,6 @@ import copy
 import numpy as np 
 import math
 import random
-from graphics import *
 from envParams import envParams
 from argparse import Action
 
