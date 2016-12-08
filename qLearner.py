@@ -8,6 +8,7 @@ import copy
 import numpy as np 
 import math
 import random
+from graphics import *
 from envParams import envParams
 from argparse import Action
 
@@ -82,8 +83,6 @@ class QLearner(object):
         if state[1]==self.envparams.stateSpaceRange[1][1]:
             yRegionNumber=yRegionNumber-1
         regionNumber=(yRegionNumber-1)*self.envparams.stateFeatureDimX+xRegionNumber
-        if regionNumber==self.envparams.stateFeatureDim+1:
-            regionNumber-=1
         phiIndex=regionNumber-1
         return phiIndex    
     
