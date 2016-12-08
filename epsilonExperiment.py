@@ -135,7 +135,6 @@ if __name__ == '__main__':
     else:
         information.write('Epsilon Greedy Explore: Random Walk\n')
     information.write('Region Corner Coordinates: '+str(polyexp.envparams.goalPoint)+'\n\n\n')
-    
     information.write('#Pure Explore: '+str(numberOfPureExploreMoves)+'\n')
     information.write('#Epsilon Greedy: '+str(numberOfMoves-numberOfPureExploreMoves)+'\n')
     information.write('#Pure Exploit: '+str(numberOfPureExploitMoves)+'\n')
