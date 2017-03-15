@@ -505,9 +505,10 @@ class polyExplorer(object):
         yInt = self.det(d, ydiff) / div
         return [xInt, yInt]
     def det(self, a, b):
-        return a[0] * b[1] - a[1] * b[0]                
+        return a[0] * b[1] - a[1] * b[0] 
+    
     def move(self, currentPosition):
-        if self.directionFlag==1:
+        if self.directionFlag==1:#It means Explore
         # If the current position is a corner
             if self.cornerIndex == 1:
                 [x,y]=[self.corner(currentPosition)[0], self.corner(currentPosition)[1]]

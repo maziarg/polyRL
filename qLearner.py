@@ -8,7 +8,7 @@ import copy
 import numpy as np 
 import math
 import random
-from graphics import *
+# from graphics import *
 from envParams import envParams
 from argparse import Action
 
@@ -32,6 +32,7 @@ class QLearner(object):
         self.LearningRate= learningRate
         self.actionSamplingDensity= actionSamplingDensity
         self.exploitFlag=0
+        self.puddleFlag=0
         self.goalRegion=0
         self.stateRegionXLength=(self.envparams.stateSpaceRange[0][1]-self.envparams.stateSpaceRange[0][0])/self.envparams.stateFeatureDimX
         self.stateRegionYLength=(self.envparams.stateSpaceRange[1][1]-self.envparams.stateSpaceRange[1][0])/self.envparams.stateFeatureDimY
@@ -83,6 +84,8 @@ class QLearner(object):
         if state[1]==self.envparams.stateSpaceRange[1][1]:
             yRegionNumber=yRegionNumber-1
         regionNumber=(yRegionNumber-1)*self.envparams.stateFeatureDimX+xRegionNumber
+        if regionNumber==self.envparams.stateFeatureDim+1:
+            regionNumber-=1
         phiIndex=regionNumber-1
         return phiIndex    
     
@@ -201,8 +204,34 @@ class QLearner(object):
             return True
         else:
             return False
-    
+    def isInPuddleZone(self,state):
+        if state[0]>=self.envparams.puddlePoint[0][0] and state[0]<=self.envparams.puddlePoint[1][0] and state[1]>=self.envparams.puddlePoint[0][1] and state[1]<=self.envparams.puddlePoint[1][1]:
+#         if self.spaceRegion(state)+1==self.goalRegion:
+            return True
+        else:
+            return False
+    def findMinTimeStep(self,state):
+        if self.getReward(state)==self.envparams.goalReward:
+            return 0
+        else:
+            if state[0]<=self.envparams.goalPoint[1][0] and state[0]>=self.envparams.goalPoint[0][0]:
+                Ly1=abs(state[1]-self.envparams.goalPoint[0][1])
+                Ly2=abs(state[1]-self.envparams.goalPoint[1][1])
+                return min(Ly1,Ly2)
+            elif state[1]<=self.envparams.goalPoint[1][1] and state[1]>=self.envparams.goalPoint[0][1]: 
+                Lx1=abs(state[0]-self.envparams.goalPoint[0][0])
+                Lx2=abs(state[0]-self.envparams.goalPoint[1][0])
+                return min(Lx1,Lx2)
+            else:
+                Lr1=(math.sqrt((state[0]-self.envparams.goalPoint[0][0])**2+(state[1]-self.envparams.goalPoint[0][1])**2)).real
+                Lr2=(math.sqrt((state[0]-self.envparams.goalPoint[1][0])**2+(state[1]-self.envparams.goalPoint[0][1])**2)).real
+                Lr3=(math.sqrt((state[0]-self.envparams.goalPoint[0][0])**2+(state[1]-self.envparams.goalPoint[1][1])**2)).real
+                Lr4=(math.sqrt((state[0]-self.envparams.goalPoint[1][0])**2+(state[1]-self.envparams.goalPoint[1][1])**2)).real
+                return min(Lr1,Lr2,Lr3,Lr4)
     def getReward(self, state):
+        if self.puddleFlag==1:
+            if self.isInPuddleZone(state):
+                return self.envparams.puddleReward
         if self.isInGoalZone(state):
             return self.envparams.goalReward
         elif self.polyexp.isOnWall(state):
